@@ -1865,7 +1865,7 @@ var UpdateObject, MultiAction;
   }
 
   function onScreen(obj) {
-    if (obj.getOLGeometry()) return W.map.getExtent().intersectsBounds(obj.getOLGeometry().getBounds());
+    if (obj && obj.geometry) return isInMapExtent(obj.geometry);
     return false;
   }
 
@@ -3199,6 +3199,7 @@ var UpdateObject, MultiAction;
   }
 
   async function InsertGeometryMods() {
+    if (!GEOM_EDITING_SUPPORTED) return;  // Guard - geometry editing deferred
     $('#pieGeometryMods').remove();
     $('#pieViewEditGeom').remove(); //remove the Place geometry window when the option is disabled or a Place is de-selected
 
@@ -3955,8 +3956,9 @@ var UpdateObject, MultiAction;
   }
 
   function CenterOnPlace(venue, zoom) {
-    var centroid = venue.getOLGeometry().getCentroid();
-    W.map.setCenter([centroid.x, centroid.y], zoom);
+    if (!venue || !venue.geometry) return;
+    var centroid = venueGetCentroid(venue);
+    if (centroid) W.map.setCenter([centroid.x, centroid.y], zoom);
   }
 
   function isChecked(checkboxId) {
