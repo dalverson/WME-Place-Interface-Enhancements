@@ -1627,9 +1627,9 @@ var UpdateObject, MultiAction;
           (function (venue, venueDiv) {
             return async function () {
               await idbPVKeyval.set(`Places`, {
-                placeID: venue.attributes.id,
-                placeName: venue.attributes.name,
-                placePicturesIDs: venue.attributes.images.map(function (image) {
+                placeID: venue.id,
+                placeName: venue.name,
+                placePicturesIDs: venue.images.map(function (image) {
                   if (image.attributes.approved) return image.id;
                 }),
               });
@@ -1638,7 +1638,7 @@ var UpdateObject, MultiAction;
                 if (settings.PhotoViewerPreserveLayout) $(this).parent().css('visibility', 'hidden');
                 else $(this).parent().remove();
                 $('#placessqty').html($('#placessqty').html() - 1);
-                $('#imagesqty').html($('#imagesqty').html() - parseInt(venue.attributes.images.length));
+                $('#imagesqty').html($('#imagesqty').html() - parseInt(venue.images.length));
               } else if (settings.PhotoViewerShowHiddenPlaces) $(this).parent().find('.approvedImage.pvImage').css('border-color', '#fff'); //turn the border white on the images that are not in a PUR
             };
           })(venue, venueDiv),
@@ -1659,7 +1659,7 @@ var UpdateObject, MultiAction;
           'click',
           function (evt) {
             let ven = evt.target.venue;
-            sdk.DataModel.Venues.updateVenueUpdateRequest({ venueId: ven.id, venueUpdateRequestId: ven.attributes.venueUpdateRequests[0].id, isApproved: true });
+            sdk.DataModel.Venues.updateVenueUpdateRequest({ venueId: ven.id, venueUpdateRequestId: ven.venueUpdateRequests[0].id, isApproved: true });
             $($(this).parent().parent()).css('border', '1px solid #0f0');
             $($(this).parent().parent().find('img')).css('border', '1px solid #0f0');
             $(this).parent().remove();
@@ -1677,7 +1677,7 @@ var UpdateObject, MultiAction;
           'click',
           function (evt) {
             let ven = evt.target.venue;
-            sdk.DataModel.Venues.updateVenueUpdateRequest({ venueId: ven.id, venueUpdateRequestId: ven.attributes.venueUpdateRequests[0].id, isApproved: false });
+            sdk.DataModel.Venues.updateVenueUpdateRequest({ venueId: ven.id, venueUpdateRequestId: ven.venueUpdateRequests[0].id, isApproved: false });
             $(this).parent().parent().remove();
           },
           false,
@@ -1833,7 +1833,7 @@ var UpdateObject, MultiAction;
     let ven = evt.target.venue;
     let currImage = evt.target.currImage;
     let pur;
-    let venURs = ven.attributes.venueUpdateRequests;
+    let venURs = ven.venueUpdateRequests;
     for (let i = 0; i < venURs.length; i++) {
       if (venURs[i].attributes.updateType === 'ADD_IMAGE') {
         if (venURs[i].id === currImage) {
@@ -1847,7 +1847,7 @@ var UpdateObject, MultiAction;
 
   function DeleteImage(venue, imageID) {
     let UpdateObject = require('Waze/Action/UpdateObject');
-    let newimages = [].concat(venue.attributes.images);
+    let newimages = [].concat(venue.images);
     for (let i = newimages.length - 1; i >= 0; i--) {
       if (newimages[i].id === imageID) newimages.splice(i, 1);
     }
@@ -1872,7 +1872,7 @@ var UpdateObject, MultiAction;
   function Photos_zoom(venue, id, approved) {
     let zoom = document.createElement('div');
     let zoomPicIndex = null;
-    let images = venue.attributes.images;
+    let images = venue.images;
     for (let i = 0; i < images.length; i++) {
       if (images[i].id === id) {
         zoomPicIndex = i;
@@ -1893,7 +1893,7 @@ var UpdateObject, MultiAction;
     zoomDateDiv.innerHTML = `${d.toLocaleString()}`;
     zoom.appendChild(zoomDateDiv);
 
-    if (venue.attributes.images.length > 1) {
+    if (venue.images.length > 1) {
       let zoomNavDiv = document.createElement('div');
       $(zoomNavDiv).css({ 'text-align': 'center', position: 'relative', top: '30px' });
       zoomNavDiv.innerHTML =
@@ -1936,11 +1936,11 @@ var UpdateObject, MultiAction;
     if (hasPlaceSelected()) {
       //add the category to the Place
       let selected = getSelectedFeatures()[0];
-      let newCategories = [].concat(selected.attributes.categories);
+      let newCategories = [].concat(selected.categories);
       let catToAdd;
       if ($(`#piePlaceMainItem${itemNum}`).length > 0) catToAdd = $(`#piePlaceMainItem${itemNum}`)[0].getAttribute('data-category');
       else catToAdd = $(`#piePlaceAreaItem${itemNum}`)[0].getAttribute('data-category');
-      if (selected.attributes.categories.indexOf(catToAdd) === -1) {
+      if (selected.categories.indexOf(catToAdd) === -1) {
         //if the category isn't already on the Place, add it
         newCategories.push(catToAdd);
         sdk.DataModel.Venues.updateVenue({ venueId: selected.id, categories: newCategories });
@@ -2060,7 +2060,7 @@ var UpdateObject, MultiAction;
 
   // Pull natural text from opening hours
   function getOpeningHours(venue) {
-    return venue && venue.attributes.openingHours && venue.attributes.openingHours.map(formatOpeningHour);
+    return venue && venue.openingHours && venue.openingHours.map(formatOpeningHour);
   }
 
   function changeGeoHandleStyle(radius) {
