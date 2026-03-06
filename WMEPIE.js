@@ -132,6 +132,25 @@ var UpdateObject, MultiAction;
     }
   }
 
+
+  // ===== Phase A: SDK-Native Selection Wrappers =====
+  function getSelectedFeatures() {
+    const sel = sdk.Editing.getSelection();
+    if (!sel || sel.objectType !== 'venue' || !sel.ids?.length) return [];
+    return sel.ids.map(id => sdk.DataModel.Venues.getById({ venueId: id })).filter(Boolean);
+  }
+
+  function hasPlaceSelected() {
+    const sel = sdk.Editing.getSelection();
+    return !!(sel && sel.objectType === 'venue' && sel.ids?.length);
+  }
+
+  function getSelectedPlace() {
+    const sel = sdk.Editing.getSelection();
+    if (!sel || sel.objectType !== 'venue' || !sel.ids?.length) return null;
+    return sdk.DataModel.Venues.getById({ venueId: sel.ids[0] });
+  }
+
   async function init(sdk) {
     loadTranslations();
     GLE = new GoogleLinkEnhancer();
@@ -1141,11 +1160,11 @@ var UpdateObject, MultiAction;
     W.model.venues.on('objectschanged', (venues) => {
       //Hide the suggested categories for Shopping / Services due to the amount of vertical space it takes up - is often used as a valid category
       try {
-        if (WazeWrap.hasPlaceSelected())
+        if (hasPlaceSelected())
           if (
             settings.HideShopAndServices &&
-            WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories.length === 1 &&
-            WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories[0] === 'SHOPPING_AND_SERVICES'
+            getSelectedFeatures()[0].categories.length === 1 &&
+            getSelectedFeatures()[0].categories[0] === 'SHOPPING_AND_SERVICES'
           )
             $('wz-card.categories-card:eq(1)').hide();
       } catch (ex) {
@@ -1161,8 +1180,8 @@ var UpdateObject, MultiAction;
     sdk.Events.on({
       eventName: 'wme-selection-changed',
       eventHandler: () => {
-        if (W.selectionManager.getSelectedFeatures.length > 0) lastSelectedFeature = W.selectionManager.getSelectedFeatures()[0].WW.getType;
-        if (WazeWrap.hasPlaceSelected()) {
+        if (W.selectionManager.getSelectedFeatures.length > 0) lastSelectedFeature = sdk.Editing.getSelection()?.objectType;
+        if (hasPlaceSelected()) {
           setTimeout(() => {
             //Trim whitespace from start and end of house number field on Places
             $('.form-control.house-number').focusout(async function () {
@@ -1170,7 +1189,7 @@ var UpdateObject, MultiAction;
             });
 
             //Make Website label a clickable link to the set website
-            let placeURL = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.url || '';
+            let placeURL = getSelectedFeatures()[0].url || '';
 
             $('input[name="url"]').focusout(async function () {
               placeURL = $('input[name="url"]')[0].value.trim();
@@ -1201,8 +1220,8 @@ var UpdateObject, MultiAction;
             //Hide the suggested categories for Shopping / Services due to the amount of vertical space it takes up - is often used as a valid category
             if (
               settings.HideShopAndServices &&
-              WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories.length === 1 &&
-              WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories[0] === 'SHOPPING_AND_SERVICES'
+              getSelectedFeatures()[0].categories.length === 1 &&
+              getSelectedFeatures()[0].categories[0] === 'SHOPPING_AND_SERVICES'
             )
               $('wz-card.categories-card:eq(1)').hide();
           }, 0);
@@ -1613,8 +1632,8 @@ var UpdateObject, MultiAction;
             let lat = ((geo.bottom + geo.top) / 2 + geo.bottom) / 2;
             W.map.setCenter(new OpenLayers.Geometry.Point(lon, lat));
             W.map.getOLMap().zoomTo(17);
-            W.selectionManager.unselectAll();
-            W.selectionManager.setSelectedModels(venueList);
+            sdk.Editing.clearSelection();
+            sdk.Editing.setSelection({ selection: { ids: venueList.map(v => v.id || v), objectType: 'venue' } });
           };
         })(vattr.geometry.bounds, catalog[i]),
         false,
@@ -1659,11 +1678,11 @@ var UpdateObject, MultiAction;
           (function (imageid, venue, approved) {
             return function () {
               Photos_zoom(venue, imageid, approved);
-              W.selectionManager.unselectAll();
+              sdk.Editing.clearSelection();
               //Disabling selecting the Place when viewing the expanded picture
               //let venueList = [];
               //venueList.push(W.model.venues.objects[idvenue]);
-              //W.selectionManager.setSelectedModels(venueList);
+              //sdk.Editing.setSelection({ selection: { ids: venueList.map(v => v.id || v), objectType: 'venue' } });
               $('#venue-edit-photos').css('display', 'block');
               $('#venue-edit-general').css('display', 'none');
             };
@@ -1840,9 +1859,9 @@ var UpdateObject, MultiAction;
   }
 
   function PlaceMenuShortcut(itemNum) {
-    if (WazeWrap.hasPlaceSelected()) {
+    if (hasPlaceSelected()) {
       //add the category to the Place
-      let selected = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel();
+      let selected = getSelectedFeatures()[0];
       let newCategories = [].concat(selected.attributes.categories);
       let catToAdd;
       if ($(`#piePlaceMainItem${itemNum}`).length > 0) catToAdd = $(`#piePlaceMainItem${itemNum}`)[0].getAttribute('data-category');
@@ -1860,7 +1879,7 @@ var UpdateObject, MultiAction;
   }
 
   function AddHoursParserInterface() {
-    if (WazeWrap.hasPlaceSelected()) {
+    if (hasPlaceSelected()) {
       var $PIEHoursParser = $('<div>', { style: 'min-height:20px' });
       if (!$('#PIEHoursParserDiv').length) {
         $PIEHoursParser.html(
@@ -1944,10 +1963,10 @@ var UpdateObject, MultiAction;
       pasteHours = pasteHours.replace(lngFullDate[i], englishNames[i]);
     }
 
-    if (!replaceAll) pasteHours = pasteHours + ',' + getOpeningHours(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel()).join(',');
+    if (!replaceAll) pasteHours = pasteHours + ',' + getOpeningHours(getSelectedFeatures()[0]).join(',');
     var parserResult = hoursparser.parseHours(pasteHours);
     if (parserResult.hours && parserResult.overlappingHours === false && parserResult.sameOpenAndCloseTimes === false && parserResult.parseError === false) {
-      W.model.actionManager.add(new UpdateObject(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel(), { openingHours: parserResult.hours }));
+      W.model.actionManager.add(new UpdateObject(getSelectedFeatures()[0], { openingHours: parserResult.hours }));
       $('#PIEHoursParserError').empty();
     } else {
       $('#PIE-hourspaste').css({ 'background-color': '#FDD' }); //.attr({title:bannButt.noHours.getTitle(parserResult.hours)});
@@ -1986,7 +2005,7 @@ var UpdateObject, MultiAction;
   }
 
   function enlargeVirtualVerticies() {
-    if (WazeWrap.hasPlaceSelected()) {
+    if (hasPlaceSelected()) {
       setTimeout(async function () {
         if (settings.EnlargeGeoHandles) {
           W.map.controls.find(function (c) {
@@ -2113,7 +2132,7 @@ var UpdateObject, MultiAction;
 
   function handleNavPointOffScreen() {
     if (
-      selectedItem !== WazeWrap.getSelectedFeatures().first() ||
+      selectedItem !== getSelectedFeatures().first() ||
       WazeWrap.Geometry.isGeometryInMapExtent(new OpenLayers.Geometry.Point(ClosestSegmentNavPoint.lonlat.lon, ClosestSegmentNavPoint.lonlat.lat))
     ) {
       W.map.events.unregister('moveend', window, handleNavPointOffScreen);
@@ -2130,7 +2149,7 @@ var UpdateObject, MultiAction;
       b = W.map.venueLayer.getVisibility(),
       c = closestSegmentLayer.getVisibility(),
       d = !$('#map-lightbox > div').is(':visible'), //$('#map-lightbox > div').length === 0,/* Check for HN editing */
-      e = WazeWrap.hasSelectedFeatures() && WazeWrap.getSelectedFeatures()[0].WW.getType() !== 'bigJunction';
+      e = WazeWrap.hasSelectedFeatures() && getSelectedFeatures()[0]!== 'bigJunction';
 
     if (a && b && c && d && e) return true;
     else return false;
@@ -2162,13 +2181,13 @@ var UpdateObject, MultiAction;
     else {
       getActiveEditor().then((val) => {
         if (WazeWrap.hasSelectedFeatures()) {
-          let selectedItem = WazeWrap.getSelectedFeatures()[0];
+          let selectedItem = getSelectedFeatures()[0];
 
-          if ('venue' !== selectedItem.WW.getType()) {
+          if ('venue' !== selectedItem) {
             removeDragCallbacks();
             clearClosesetSegmentLayerFeatures();
           } else {
-            placeIsPoint = selectedItem.WW.getObjectModel().isPoint();
+            placeIsPoint = selectedItem.geometry?.type === 'Point';
             if (placeIsPoint) {
               //Event when the Place is moved
               if (nativeolControlMoveCallback == null) nativeolControlMoveCallback = val.olControl.handlers.drag.callbacks.move;
@@ -2177,33 +2196,33 @@ var UpdateObject, MultiAction;
                 nativeolControlMoveCallback.call(val.olControl, e);
                 let screenCoord = W.map.getLonLatFromViewPortPx(e);
                 let geom = WazeWrap.Geometry.ConvertTo900913(screenCoord.lon, screenCoord.lat);
-                if (selectedItem.WW.getObjectModel().getNavigationPoints().length > 0)
+                if (selectedItem.navigationPoints.length > 0)
                   geom = WazeWrap.Geometry.ConvertTo900913(
-                    selectedItem.WW.getObjectModel().attributes.entryExitPoints[0]._point.coordinates[0],
-                    selectedItem.WW.getObjectModel().attributes.entryExitPoints[0]._point.coordinates[1],
+                    selectedItem.navigationPoints[0]._point.coordinates[0],
+                    selectedItem.navigationPoints[0]._point.coordinates[1],
                   );
                 let entryExitPoint = new OpenLayers.Geometry.Point(geom.lon, geom.lat);
                 findNearestSegment(entryExitPoint);
               };
 
-              let entryExitPoint = selectedItem.WW.getObjectModel().getOLGeometry().clone();
-              if (selectedItem.WW.getObjectModel().getNavigationPoints().length > 0) {
+              let entryExitPoint = selectedItem.geometry.clone();
+              if (selectedItem.navigationPoints.length > 0) {
                 let geom = WazeWrap.Geometry.ConvertTo900913(
-                  selectedItem.WW.getObjectModel().getNavigationPoints()[0]._point.coordinates[0],
-                  selectedItem.WW.getObjectModel().getNavigationPoints()[0]._point.coordinates[1],
+                  selectedItem.navigationPoints[0]._point.coordinates[0],
+                  selectedItem.navigationPoints[0]._point.coordinates[1],
                 );
                 entryExitPoint = new OpenLayers.Geometry.Point(geom.lon, geom.lat);
               }
               findNearestSegment(entryExitPoint);
             } else {
-              if (selectedItem.WW.getObjectModel().getNavigationPoints().length === 0) findNearestSegment(selectedItem.WW.getObjectModel().getOLGeometry().getCentroid());
+              if (selectedItem.navigationPoints.length === 0) findNearestSegment(selectedItem.geometry.getCentroid());
               else {
-                for (let i = 0; i < selectedItem.WW.getObjectModel().getNavigationPoints().length; i++) {
+                for (let i = 0; i < selectedItem.navigationPoints.length; i++) {
                   let geom = WazeWrap.Geometry.ConvertTo900913(
-                    selectedItem.WW.getObjectModel().getNavigationPoints()[i]._point.coordinates[0],
-                    selectedItem.WW.getObjectModel().getNavigationPoints()[i]._point.coordinates[1],
+                    selectedItem.navigationPoints[i]._point.coordinates[0],
+                    selectedItem.navigationPoints[i]._point.coordinates[1],
                   );
-                  findNearestSegment(new OpenLayers.Geometry.Point(geom.lon, geom.lat)); //selectedItem.WW.getObjectModel().getNavigationPoints()[i]._point);
+                  findNearestSegment(new OpenLayers.Geometry.Point(geom.lon, geom.lat)); //selectedItem.navigationPoints[i]._point);
                 }
               }
             }
@@ -2514,12 +2533,12 @@ var UpdateObject, MultiAction;
     NewPlace.attributes.categories.push('PARKING_LOT');
 
     W.model.actionManager.add(new AddPlace(NewPlace));
-    W.selectionManager.setSelectedModels([NewPlace]);
+    sdk.Editing.setSelection({ selection: { ids: [NewPlace].filter(v => v?.id).map(v => v.id), objectType: 'venue' } });
   }
 
   function highlightObsoleteHospitalCategory() {
-    if (WazeWrap.getSelectedFeatures().length > 0 && WazeWrap.getSelectedFeatures()[0].WW.getType() === 'venue') {
-      if (_.includes(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories, 'HOSPITAL_MEDICAL_CARE')) {
+    if (getSelectedFeatures().length > 0 && getSelectedFeatures()[0]=== 'venue') {
+      if (_.includes(getSelectedFeatures()[0].categories, 'HOSPITAL_MEDICAL_CARE')) {
         $('.select2-choices').css('animation-iteration-count', 'infinite');
         $('.select2-choices').attr(
           'title',
@@ -2633,7 +2652,7 @@ var UpdateObject, MultiAction;
     multiaction.doSubAction(W.model, UFA);
     W.model.actionManager.add(multiaction);
 
-    W.selectionManager.setSelectedModels([NewPlace]);
+    sdk.Editing.setSelection({ selection: { ids: [NewPlace].filter(v => v?.id).map(v => v.id), objectType: 'venue' } });
   }
 
   function doneHandler(geom) {
@@ -2753,7 +2772,7 @@ var UpdateObject, MultiAction;
 
       multiaction.doSubAction(W.model, new UpdateFeatureAddress(NewPlace, newAttributes));
       W.model.actionManager.add(multiaction);
-      W.selectionManager.setSelectedModels([NewPlace]);
+      sdk.Editing.setSelection({ selection: { ids: [NewPlace].filter(v => v?.id).map(v => v.id), objectType: 'venue' } });
     } else console.log('WMEPIE - No segment found; cannot set street or city name.');
 
     if (category === resCategory && settings.EditRPPAfterCreated) setTimeout(editRPPAddress, 50);
@@ -2877,18 +2896,18 @@ var UpdateObject, MultiAction;
     Object.keys(areaHandlers).forEach((key) => delete areaHandlers[key]);
   }
   function openPUR() {
-    if (WazeWrap.hasPlaceSelected() && $('.pending-changes-alert').length > 0) {
+    if (hasPlaceSelected() && $('.pending-changes-alert').length > 0) {
       if (
-        WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.venueUpdateRequests.length > 0 &&
-        (typeof WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().state === 'undefined' || WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().state === null)
+        getSelectedFeatures()[0].venueUpdateRequests.length > 0 &&
+        (typeof getSelectedFeatures()[0].state === 'undefined' || getSelectedFeatures()[0].state === null)
       )
-        W.commands.execute('place_updates:list', WazeWrap.getSelectedFeatures()[0].WW.getObjectModel()); // W.model.venues.get(WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.id)
+        W.commands.execute('place_updates:list', getSelectedFeatures()[0]); // W.model.venues.get(getSelectedFeatures()[0].attributes.repositoryObject.attributes.id)
     }
   }
 
   function _hidePaymentType() {
-    if (WazeWrap.hasSelectedFeatures() && _.includes(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories, 'PARKING_LOT')) {
-      let attr = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes;
+    if (WazeWrap.hasSelectedFeatures() && _.includes(getSelectedFeatures()[0].categories, 'PARKING_LOT')) {
+      let attr = getSelectedFeatures()[0];
       if (attr.categoryAttributes.PARKING_LOT.costType && attr.categoryAttributes.PARKING_LOT.costType === 'FREE') {
         if (!$('#venue-edit-more-info > div > form > fieldset > div:nth-child(3) > div:nth-child(2)').hasClass('collapse'))
           $('#venue-edit-more-info > div > form > fieldset > div:nth-child(3) > div:nth-child(2)').addClass('collapse');
@@ -2900,19 +2919,19 @@ var UpdateObject, MultiAction;
   }
 
   function HidePaymentTypePlaceSelected() {
-    if (WazeWrap.hasSelectedFeatures() && WazeWrap.getSelectedFeatures()[0].WW.getType() === 'venue') _hidePaymentType();
+    if (WazeWrap.hasSelectedFeatures() && getSelectedFeatures()[0]=== 'venue') _hidePaymentType();
   }
 
   function OrthogonalizePlace() {
     if (
-      WazeWrap.hasPlaceSelected() &&
-      WazeWrap.getSelectedFeatures()[0]
-        .WW.getObjectModel()
+      hasPlaceSelected() &&
+      getSelectedFeatures()[0]
+        
         .getOLGeometry()
         .toString()
         .match(/^POLYGON/)
     ) {
-      let selected = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel();
+      let selected = getSelectedFeatures()[0];
       var newGeom = WazeWrap.Util.OrthogonalizeGeometry(selected.getOLGeometry().clone().components[0].components);
       var UFG = require('Waze/Action/UpdateFeatureGeometry');
       var originalGeometry = selected.getOLGeometry().clone();
@@ -2949,14 +2968,14 @@ var UpdateObject, MultiAction;
 
   function SimplifyPlace() {
     if (
-      WazeWrap.hasPlaceSelected() &&
-      WazeWrap.getSelectedFeatures()[0]
-        .WW.getObjectModel()
+      hasPlaceSelected() &&
+      getSelectedFeatures()[0]
+        
         .getOLGeometry()
         .toString()
         .match(/^POLYGON/)
     ) {
-      let selected = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel();
+      let selected = getSelectedFeatures()[0];
       let originalGeometry = selected.getOLGeometry().clone();
       let ls = new OpenLayers.Geometry.LineString(originalGeometry.components[0].components);
       ls = ls.simplify(settings.SimplifyFactor);
@@ -2979,15 +2998,15 @@ var UpdateObject, MultiAction;
         '<div style="width:100%; height:18px;"><i class="fa fa-window-close" aria-hidden="true" style="float:right; cursor:pointer;" id="pieGeomClose"></i></div>',
         '<div style="float:left; margin-right:20px;"><h3>Standard (lat, lon)</h3>',
         '<div><textarea rows="7" cols="40" id="piePlaceGeomStandard" style="height:auto;"></textarea></div>',
-        !WazeWrap.hasMapCommentSelected() ? '<button id="pieBtnApplyStandardGeom">Apply</button>' : '',
+        !(sdk.Editing.getSelection()?.objectType === 'mapComment') ? '<button id="pieBtnApplyStandardGeom">Apply</button>' : '',
         '</div>',
         '<div style="float:left; margin-right:20px;"><h3>Waze (lon lat)</h3>',
         '<div><textarea rows="7" cols="40" id="piePlaceGeomWaze" style="height:auto;"></textarea></div>',
-        !WazeWrap.hasMapCommentSelected() ? '<button id="pieBtnApplyWazeGeom">Apply</button>' : '',
+        !(sdk.Editing.getSelection()?.objectType === 'mapComment') ? '<button id="pieBtnApplyWazeGeom">Apply</button>' : '',
         '</div>',
         '<div style="float:left;"><h3>WKT</h3>',
         '<div><textarea rows="7" cols="45" id="piePlaceGeomWKT" style="height:auto;"></textarea></div>',
-        !WazeWrap.hasMapCommentSelected() ? '<button id="pieBtnApplyWKTGeom">Apply</button>' : '',
+        !(sdk.Editing.getSelection()?.objectType === 'mapComment') ? '<button id="pieBtnApplyWKTGeom">Apply</button>' : '',
         '</div>',
         '</div>', //end content div
         '</div>', //end main div
@@ -3061,7 +3080,7 @@ var UpdateObject, MultiAction;
   }
 
   function saveNewPlaceGeometry(newGeom) {
-    let selected = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel();
+    let selected = getSelectedFeatures()[0];
     let originalGeometry = selected.getOLGeometry().clone();
     let ls = new OpenLayers.Geometry.LineString(newGeom);
     let newGeometry = new OpenLayers.Geometry.Polygon(new OpenLayers.Geometry.LinearRing(ls.components));
@@ -3071,7 +3090,7 @@ var UpdateObject, MultiAction;
   }
 
   function updateGeometryInputs() {
-    let currPlaceModel = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel();
+    let currPlaceModel = getSelectedFeatures()[0];
     let currPlaceGeom = currPlaceModel.getOLGeometry().components[0].clone().components;
     let standardGeom = '',
       WMEGeom = '',
@@ -3106,18 +3125,18 @@ var UpdateObject, MultiAction;
     $('#pieViewEditGeom').remove(); //remove the Place geometry window when the option is disabled or a Place is de-selected
 
     if (
-      (WazeWrap.hasPlaceSelected() || WazeWrap.hasMapCommentSelected()) &&
-      WazeWrap.getSelectedFeatures()[0]
-        .WW.getObjectModel()
+      (hasPlaceSelected() || (sdk.Editing.getSelection()?.objectType === 'mapComment')) &&
+      getSelectedFeatures()[0]
+        
         .getOLGeometry()
         .toString()
         .match(/^POLYGON/)
     ) {
       await new Promise((r) => setTimeout(r, 150));
       let $GeomMods = $(
-        `<div class="form-group" id="pieGeometryMods"><label class="control-label">Geometry</label><div class="controls">${!WazeWrap.hasMapCommentSelected() ? '<i id="pieorthogonalize" title="Orthogonalize" class="fa fa-plus-square-o fa-2x" aria-hidden="true" style="cursor:pointer;"></i> <i id="piesimplifyplace" title="Simplify" class="fa fa-magic fa-2x" aria-hidden="true" style="cursor:pointer;"></i>' : ''} <i id="pierotate" title="Allow rotating the Place" class="fa fa-repeat fa-2x" aria-hidden="true" style="cursor:pointer; color:${settings.Rotate ? 'rgb(0,180,0)' : 'black'}"></i> <i id="pieresize" title="Allow resizing the Place. While enabled the geometry cannot be modified" class="fa fa-expand fa-2x" aria-hidden="true" style="cursor:pointer; color:${settings.Resize ? 'rgb(0,180,0)' : 'black'}"></i> <i id="pieEditGeom" class="fa fa-pencil-square-o fa-2x" aria-hidden="true" style="cursor:pointer;"></i> <i id="pieClearGeom" title="Clear geometry" class="fa fa-times fa-2x" aria-hidden="true" style="cursor:pointer; color:red;"></i></div></div>`,
+        `<div class="form-group" id="pieGeometryMods"><label class="control-label">Geometry</label><div class="controls">${!(sdk.Editing.getSelection()?.objectType === 'mapComment') ? '<i id="pieorthogonalize" title="Orthogonalize" class="fa fa-plus-square-o fa-2x" aria-hidden="true" style="cursor:pointer;"></i> <i id="piesimplifyplace" title="Simplify" class="fa fa-magic fa-2x" aria-hidden="true" style="cursor:pointer;"></i>' : ''} <i id="pierotate" title="Allow rotating the Place" class="fa fa-repeat fa-2x" aria-hidden="true" style="cursor:pointer; color:${settings.Rotate ? 'rgb(0,180,0)' : 'black'}"></i> <i id="pieresize" title="Allow resizing the Place. While enabled the geometry cannot be modified" class="fa fa-expand fa-2x" aria-hidden="true" style="cursor:pointer; color:${settings.Resize ? 'rgb(0,180,0)' : 'black'}"></i> <i id="pieEditGeom" class="fa fa-pencil-square-o fa-2x" aria-hidden="true" style="cursor:pointer;"></i> <i id="pieClearGeom" title="Clear geometry" class="fa fa-times fa-2x" aria-hidden="true" style="cursor:pointer; color:red;"></i></div></div>`,
       );
-      if (W.selectionManager.getSelectedFeatures()[0].WW.getType() === 'mapComment') $('#edit-panel > div > div > div.tab-content > div > form > div:nth-child(4)').after($GeomMods);
+      if (sdk.Editing.getSelection()?.objectType === 'mapComment') $('#edit-panel > div > div > div.tab-content > div > form > div:nth-child(4)').after($GeomMods);
       else $('#venue-edit-general > div:nth-child(9)').after($GeomMods);
 
       $('#pieorthogonalize').click(async function () {
@@ -3133,7 +3152,7 @@ var UpdateObject, MultiAction;
       });
 
       $('#pieClearGeom').click(async function () {
-        let selected = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel();
+        let selected = getSelectedFeatures()[0];
         let centerLonLat = selected.getOLGeometry().bounds.getCenterLonLat();
         let newGeom = OpenLayers.Geometry.Polygon.createRegularPolygon(new OpenLayers.Geometry.Point(centerLonLat.lon, centerLonLat.lat), 20, 4, null).components[0].components;
         let UFG = require('Waze/Action/UpdateFeatureGeometry');
@@ -3189,10 +3208,10 @@ var UpdateObject, MultiAction;
 
   function ShowPlaceLocatorCrosshair() {
     $('#pieCrosshairs').remove();
-    if (WazeWrap.getSelectedFeatures().length > 0) {
-      if (WazeWrap.getSelectedFeatures()[0].WW.getType() === 'venue') {
+    if (getSelectedFeatures().length > 0) {
+      if (getSelectedFeatures()[0]=== 'venue') {
         var $crosshairs;
-        if (_.includes(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories, 'RESIDENCE_HOME')) {
+        if (_.includes(getSelectedFeatures()[0].categories, 'RESIDENCE_HOME')) {
           $('.venue > .tab-content').css('position', 'relative');
           $crosshairs = $(
             '<div style="position:absolute; z-index:100; cursor:pointer; top:0; right:0;" id="pieCrosshairs" title="Zoom and center on Place"><i class="fa fa-crosshairs fa-lg" id="placeCrosshair" aria-hidden="true"></i></div>',
@@ -3206,7 +3225,7 @@ var UpdateObject, MultiAction;
           $('#venue-edit-general > form > div:nth-child(1) > div:nth-child(2) > label').after($crosshairs);
         }
         $('#pieCrosshairs').click(async function () {
-          CenterOnPlace(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel(), settings.PlaceZoom);
+          CenterOnPlace(getSelectedFeatures()[0], settings.PlaceZoom);
         });
 
         $('#pieCrosshairs').mouseenter(function (e) {
@@ -3228,13 +3247,13 @@ var UpdateObject, MultiAction;
   var BusinessPLAMode = false;
   function ShowParkingLotButton() {
     $('#piePLAButton').remove();
-    if (WazeWrap.getSelectedFeatures().length > 0) {
-      if (WazeWrap.getSelectedFeatures()[0].WW.getType() === 'venue') {
+    if (getSelectedFeatures().length > 0) {
+      if (getSelectedFeatures()[0]=== 'venue') {
         var $PLAButton;
         if (
           !(
-            _.includes(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories, 'RESIDENCE_HOME') ||
-            _.includes(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories, 'PARKING_LOT')
+            _.includes(getSelectedFeatures()[0].categories, 'RESIDENCE_HOME') ||
+            _.includes(getSelectedFeatures()[0].categories, 'PARKING_LOT')
           )
         ) {
           $PLAButton = $(
@@ -3245,10 +3264,10 @@ var UpdateObject, MultiAction;
           $('#piePLAButton').click(async function () {
             if (!BusinessPLAMode) {
               BusinessPLAMode = true;
-              businessPLAPlaceName = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.name;
-              businessPLAPlaceAddress = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().getAddress().attributes;
-              //businessPLAPlacePhone = WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.phone;
-              //businessPLAPlaceURL = WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.url;
+              businessPLAPlaceName = getSelectedFeatures()[0].name;
+              businessPLAPlaceAddress = getSelectedFeatures()[0].getAddress().attributes;
+              //businessPLAPlacePhone = getSelectedFeatures()[0].attributes.repositoryObject.attributes.phone;
+              //businessPLAPlaceURL = getSelectedFeatures()[0].attributes.repositoryObject.attributes.url;
               startBusinessPLAPlacementMode();
               if (!$('#layer-switcher-item_parking_places').prop('checked')) {
                 if (!$('#layer-switcher-group_places').prop('checked')) $('#layer-switcher-group_places').click();
@@ -3264,7 +3283,7 @@ var UpdateObject, MultiAction;
   var extProviderTries = 0;
   function ShowExternalProviderTooltip() {
     if (isChecked('_cbShowExternalProviderTooltip'))
-      if (WazeWrap.getSelectedFeatures().length > 0 && WazeWrap.getSelectedFeatures()[0].WW.getType() === 'venue') {
+      if (getSelectedFeatures().length > 0 && getSelectedFeatures()[0]=== 'venue') {
         if ($('.select2-container.uuid').length > 0)
           for (var i = 0; i < $('.select2-container.uuid').find('span.select2-chosen').length; i++) {
             extProviderTries = 0;
@@ -3277,8 +3296,8 @@ var UpdateObject, MultiAction;
   function ShowPLSpotEstimatorButton() {
     $('.PIEParkingSpotEstimatorButton').remove();
 
-    if (WazeWrap.getSelectedFeatures().length > 0) {
-      if (WazeWrap.getSelectedFeatures()[0].WW.getType() === 'venue' && WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories.includes('PARKING_LOT')) {
+    if (getSelectedFeatures().length > 0) {
+      if (getSelectedFeatures()[0]=== 'venue' && getSelectedFeatures()[0].categories.includes('PARKING_LOT')) {
         var $ParkingSpotEstimatorButton;
         $ParkingSpotEstimatorButton = $(
           '<div style="font-size:18px; float:right; z-index:100; cursor:pointer; top:0; right:0; margin-left:1px; margin-right:1px;" class="PIEParkingSpotEstimatorButton" title="' +
@@ -3427,8 +3446,8 @@ var UpdateObject, MultiAction;
   function ShowPLSpotEstimator() {
     if ($('#PIEParkingSpotEstimator').length > 0) $('#PIEParkingSpotEstimator').remove();
     else {
-      if (WazeWrap.getSelectedFeatures().length > 0) {
-        if (WazeWrap.getSelectedFeatures()[0].WW.getType() === 'venue' && WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories.includes('PARKING_LOT')) {
+      if (getSelectedFeatures().length > 0) {
+        if (getSelectedFeatures()[0]=== 'venue' && getSelectedFeatures()[0].categories.includes('PARKING_LOT')) {
           W.map.addLayer(PLSpotEstimatorLayer);
           PLSpotEstimatorLayer.setZIndex(1000);
           var $PLSpotEstimator = $('<div>');
@@ -3493,7 +3512,7 @@ var UpdateObject, MultiAction;
           $('#PIESetParkingSpacesToPlace').click(async function () {
             let spotCount = $('#PIEPLSpotEstimatorTotal')[0].innerText;
             if (spotCount != '0') {
-              let myPlace = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel();
+              let myPlace = getSelectedFeatures()[0];
               let existingAttr = myPlace.attributes.categoryAttributes.PARKING_LOT;
               let newAttr = {};
               if (existingAttr) {
@@ -3639,12 +3658,12 @@ var UpdateObject, MultiAction;
   function ShowCopyPlaceButton() {
     $('#pieCopyPlaceButton').remove();
 
-    if (WazeWrap.getSelectedFeatures().length > 0) {
-      //WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.id.match(/(\d+\.){2}\d+/)
-      if (WazeWrap.getSelectedFeatures()[0].WW.getType() === 'venue') {
-        // && (typeof WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.id === "string")){ //id is only a string if the Place has been saved - don't allow copying unsaved Places
+    if (getSelectedFeatures().length > 0) {
+      //getSelectedFeatures()[0].attributes.repositoryObject.attributes.id.match(/(\d+\.){2}\d+/)
+      if (getSelectedFeatures()[0]=== 'venue') {
+        // && (typeof getSelectedFeatures()[0].attributes.repositoryObject.attributes.id === "string")){ //id is only a string if the Place has been saved - don't allow copying unsaved Places
         var $PlaceCopyButton;
-        if (!_.includes(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories, 'RESIDENCE_HOME')) {
+        if (!_.includes(getSelectedFeatures()[0].categories, 'RESIDENCE_HOME')) {
           $PlaceCopyButton = $(
             '<div style="float:right; z-index:100; cursor:pointer; position: absolute; top:0; right:0; margin-left:1px; margin-right:1px;" id="pieCopyPlaceButton" title="Creates a copy of this Place"><i class="fa fa-files-o fa-lg" aria-hidden="true"></i></div>',
           );
@@ -3654,7 +3673,7 @@ var UpdateObject, MultiAction;
             var PlaceObject = require('Waze/Feature/Vector/Landmark');
             var AddPlace = require('Waze/Action/AddLandmark');
 
-            var oldPlace = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel();
+            var oldPlace = getSelectedFeatures()[0];
             var NewPlace = new PlaceObject({ geoJSONGeometry: W.userscripts.toGeoJSONGeometry(oldPlace.getOLGeometry().clone()) });
 
             NewPlace.attributes.name = oldPlace.attributes.name + ' (copy)';
@@ -3728,7 +3747,7 @@ var UpdateObject, MultiAction;
             UFA.options.updateHouseNumber = true;
             multiaction.doSubAction(W.model, UFA);
             W.model.actionManager.add(multiaction);
-            W.selectionManager.setSelectedModels([NewPlace]);
+            sdk.Editing.setSelection({ selection: { ids: [NewPlace].filter(v => v?.id).map(v => v.id), objectType: 'venue' } });
           });
         }
       }
@@ -3737,7 +3756,7 @@ var UpdateObject, MultiAction;
 
   function ShowSearchButton() {
     $('#pieSearchButton').remove();
-    if (WazeWrap.hasPlaceSelected()) {
+    if (hasPlaceSelected()) {
       var $search = $('<i class="fa fa-search" id="pieSearchButton" title="Fills the search bar with the address" aria-hidden="true" style="display:inline; margin:5px;"></i>');
 
       $('.address-edit-view').parent().parent().find('wz-label').append($search);
@@ -3757,17 +3776,17 @@ var UpdateObject, MultiAction;
       $('div.description-control').append('<i class="fa fa-times-circle clearButton" style="position:absolute; top:0; right:0;"></i>');
       $('div.description-control').css('position', 'relative');
       $('.clearButton').click(async function () {
-        W.model.actionManager.add(new UpdateObject(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel(), { description: '' }));
+        W.model.actionManager.add(new UpdateObject(getSelectedFeatures()[0], { description: '' }));
       });
     }, 0);
   }
 
   function MoveAddress() {
-    if (WazeWrap.hasPlaceSelected()) $('#venue-edit-general').prepend($('.address-edit.side-panel-section'));
+    if (hasPlaceSelected()) $('#venue-edit-general').prepend($('.address-edit.side-panel-section'));
   }
 
   //     function MoveHNEntry(){
-  //         if(WazeWrap.hasPlaceSelected()){
+  //         if(hasPlaceSelected()){
   //             let move = function(){
   //                 delayFire(200, function(){$('.street-name').parent().parent().before($('wz-text-input.house-number').parent())});
   //             };
@@ -3776,7 +3795,7 @@ var UpdateObject, MultiAction;
   //     }
 
   function AddMakePrimaryButtons() {
-    if (!WazeWrap.hasPlaceSelected() || ($('.alias-item-content').length = 0)) {
+    if (!hasPlaceSelected() || ($('.alias-item-content').length = 0)) {
       return;
     }
     $('.alias-item').each(async function () {
@@ -3785,7 +3804,7 @@ var UpdateObject, MultiAction;
         let $button = $('<div>', { class: 'makePrimary alias-item-action' })
           .text('To Name')
           .click(async function () {
-            let obj = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel();
+            let obj = getSelectedFeatures()[0];
             let toPrimary = $(altItem).find('.alias-item-content').text();
             let aliases = obj.attributes.aliases.filter((a) => a != toPrimary);
             aliases.push(obj.attributes.name);
@@ -3802,10 +3821,10 @@ var UpdateObject, MultiAction;
 
   async function AddPlaceCategoriesButtons() {
     $('#piePlaceCategoriesButtonsContainer').remove();
-    if (WazeWrap.getSelectedFeatures().length > 0) {
+    if (getSelectedFeatures().length > 0) {
       await new Promise((r) => setTimeout(r, 150));
       var $container = $('<div>', { id: 'piePlaceCategoriesButtonsContainer', style: 'white-space: nowrap;' });
-      if (WazeWrap.getSelectedFeatures()[0].WW.getType() === 'venue') {
+      if (getSelectedFeatures()[0]=== 'venue') {
         var categoryOptions = $('[id^=pieItem]');
 
         var $button = $('<div>', { id: 'btnPlaceCatClear', title: 'Clear current categories', style: 'display:inline-block; cursor:pointer' }).click(async function () {
@@ -3842,16 +3861,16 @@ var UpdateObject, MultiAction;
 
   function onPlaceCategoriesButtonsClick(buttonid) {
     if (buttonid === 'btnPlaceCatClear') {
-      var blankCategories = []; //WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.categories.clone();
+      var blankCategories = []; //getSelectedFeatures()[0].attributes.repositoryObject.attributes.categories.clone();
       //console.log(blankCategories.length);
       //blankCategories.splice(0, blankCategories.length);
       //console.log(blankCategories);
-      W.model.actionManager.add(new UpdateObject(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel(), { categories: blankCategories }));
+      W.model.actionManager.add(new UpdateObject(getSelectedFeatures()[0], { categories: blankCategories }));
     } else {
-      var newCategories = [].concat(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().attributes.categories);
+      var newCategories = [].concat(getSelectedFeatures()[0].categories);
       //console.log($('#'+buttonid)[0].getAttribute("data-category"));
       newCategories.push($('#' + buttonid)[0].getAttribute('data-category'));
-      W.model.actionManager.add(new UpdateObject(WazeWrap.getSelectedFeatures()[0].WW.getObjectModel(), { categories: newCategories }));
+      W.model.actionManager.add(new UpdateObject(getSelectedFeatures()[0], { categories: newCategories }));
     }
   }
 
@@ -3873,16 +3892,16 @@ var UpdateObject, MultiAction;
   }
 
   function updatePlaceSizeDisplay() {
-    var count = WazeWrap.getSelectedFeatures().length;
+    var count = getSelectedFeatures().length;
     var metersArea = 0;
     var bold = false;
     if (count === 1) {
-      var venue = WazeWrap.getSelectedFeatures()[0];
+      var venue = getSelectedFeatures()[0];
       var isArea = venue.geometry.type.match(/^Polygon/);
 
-      if (venue.WW.getType() === 'venue' && isArea) {
+      if (venue=== 'venue' && isArea) {
         if ($('#AreaSize')) $('#AreaSize').remove();
-        metersArea = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().getOLGeometry().getGeodesicArea(W.map.getProjectionObject());
+        metersArea = getSelectedFeatures()[0].geometry.getGeodesicArea(W.map.getProjectionObject());
 
         if (metersArea > 0 && isArea) {
           var ftArea = Math.round(metersArea * 10.76391 * 100) / 100;
@@ -3930,7 +3949,7 @@ var UpdateObject, MultiAction;
     var lon = adjustedPL.match(/lon=(-?\d+\.\d+)/)[1];
     var lat = adjustedPL.match(/lat=(-?\d+\.\d+)/)[1];
     var zoom = adjustedPL.match(/zoom[Levl]*=\d+/)[0];
-    var centroid = WazeWrap.getSelectedFeatures()[0].WW.getObjectModel().getOLGeometry().getCentroid();
+    var centroid = getSelectedFeatures()[0].geometry.getCentroid();
     adjustedPL = adjustedPL.replace(lon, WazeWrap.Geometry.ConvertTo4326(centroid.x, centroid.y).lon);
     adjustedPL = adjustedPL.replace(lat, WazeWrap.Geometry.ConvertTo4326(centroid.x, centroid.y).lat);
     adjustedPL = adjustedPL.replace(zoom, 'zoomLevel=' + settings.PlaceZoom);
@@ -4768,17 +4787,17 @@ var UpdateObject, MultiAction;
         });
 
         //Image dialog navigation arrows
-        if(WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.images.length > 1){
+        if(getSelectedFeatures()[0].attributes.repositoryObject.attributes.images.length > 1){
             let thisImageIndex;
-            let PlaceImages = WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.images;
+            let PlaceImages = getSelectedFeatures()[0].attributes.repositoryObject.attributes.images;
             for(let i=0; i<PlaceImages.length; i++){
-                if(WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.images[i].id === dataID){
+                if(getSelectedFeatures()[0].attributes.repositoryObject.attributes.images[i].id === dataID){
                     thisImageIndex = i;
                     break;
                 }
             }
             $('.modal-body').addClass('imgcon');
-            $('.modal-body').prepend((thisImageIndex + 1) + "/" + WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.images.length);
+            $('.modal-body').prepend((thisImageIndex + 1) + "/" + getSelectedFeatures()[0].attributes.repositoryObject.attributes.images.length);
             $('.imgcon').append('<div class="imnav"><div class="prim control"></div><div class="zmim control"></div><div class="neim control"></div></div>');
             $('.prim').click(function(){
                 let prevIndex;
