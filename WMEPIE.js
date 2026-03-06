@@ -46,7 +46,7 @@ var UpdateObject, MultiAction;
 (async function () {
   'use strict';
 
-  var curr_ver = GM_info.script.version;
+  //var curr_ver = GM_info.script.version;
   var settings = {};
   var placeMenuSelector = '#primary-toolbar > div > div.toolbar-group.toolbar-group-venues > wz-menu'; //"#edit-buttons > div > div.toolbar-button.waze-icon-place.toolbar-submenu.toolbar-group.toolbar-group-venues.ItemInactive > menu";
   //"#edit-buttons > div > div.toolbar-submenu.toolbar-group.toolbar-group-venues.ItemInactive > menu";
@@ -60,7 +60,7 @@ var UpdateObject, MultiAction;
   var lastSelectedFeature;
   const SCRIPT_VERSION = GM_info.script.version.toString();
   const SCRIPT_NAME = GM_info.script.name;
-  const DOWNLOAD_URL = GM_info.script.fileURL;
+  const DOWNLOAD_URL = "https://update.greasyfork.org/scripts/26340/WME%20Place%20Interface%20Enhancements.user.js";
   var nativeolControlMoveCallback;
 
   //Layer definitions
@@ -113,25 +113,14 @@ var UpdateObject, MultiAction;
   }
 
   const sdk = await bootstrap({
+    scriptName: SCRIPT_NAME,
     scriptUpdateMonitor: {
-      downloadUrl: "https://update.greasyfork.org/scripts/26340/WME%20Place%20Interface%20Enhancements.user.js"
+      downloadUrl: DOWNLOAD_URL,
+      scriptVersion: SCRIPT_VERSION
     }
   });
 
   await init(sdk);
-
-
-  function loadScriptUpdateMonitor() {
-    let updateMonitor;
-    try {
-      updateMonitor = new WazeWrap.Alerts.ScriptUpdateMonitor(SCRIPT_NAME, SCRIPT_VERSION, DOWNLOAD_URL, GM_xmlhttpRequest);
-      updateMonitor.start();
-    } catch (ex) {
-      // Report, but don't stop if ScriptUpdateMonitor fails.
-      console.error(`${SCRIPT_NAME}:`, ex);
-    }
-  }
-
 
   // ===== Phase A: SDK-Native Selection Wrappers =====
   function getSelectedFeatures() {
@@ -151,6 +140,91 @@ var UpdateObject, MultiAction;
     return sdk.DataModel.Venues.getById({ venueId: sel.ids[0] });
   }
 
+
+
+
+  // SDK Venue Helper Functions (replace WazeWrap methods)
+  function venueIsPoint(venue) {
+    return venue && venue.geometry && venue.geometry.type === 'Point';
+  }
+
+  function venueIsParkingLot(venue) {
+    return venue && venue.categories && venue.categories.includes('PARKING_LOT');
+  }
+
+  function venueGetCentroid(venue) {
+    if (!venue || !venue.geometry) return null;
+    if (venue.geometry.type === 'Point') {
+      const [lon, lat] = venue.geometry.coordinates;
+      return new OpenLayers.Geometry.Point(lon, lat);
+    } else if (venue.geometry.type === 'Polygon') {
+      let lon = 0, lat = 0, count = 0;
+      for (const [x, y] of venue.geometry.coordinates[0]) {
+        lon += x;
+        lat += y;
+        count++;
+      }
+      return new OpenLayers.Geometry.Point(lon / count, lat / count);
+    }
+    return null;
+  }
+
+  function venueToOLGeometry(venue) {
+    if (!venue || !venue.geometry) return null;
+    if (venue.geometry.type === 'Point') {
+      const [lon, lat] = venue.geometry.coordinates;
+      return new OpenLayers.Geometry.Point(lon, lat);
+    } else if (venue.geometry.type === 'Polygon') {
+      const rings = venue.geometry.coordinates.map(ring =>
+        new OpenLayers.Geometry.LinearRing(
+          ring.map(([lon, lat]) => new OpenLayers.Geometry.Point(lon, lat))
+        )
+      );
+      return new OpenLayers.Geometry.Polygon(rings);
+    }
+    return null;
+  }
+
+  function isInMapExtent(geometry) {
+    // Check if a GeoJSON geometry is within the current map extent
+    if (!geometry || !geometry.coordinates) return false;
+    
+    const extent = sdk.Map.getMapExtent(); // [left, bottom, right, top]
+    if (!extent || extent.length < 4) return false;
+    
+    const [left, bottom, right, top] = extent;
+    
+    if (geometry.type === 'Point') {
+      const [lon, lat] = geometry.coordinates;
+      return lon >= left && lon <= right && lat >= bottom && lat <= top;
+    } else if (geometry.type === 'Polygon') {
+      // Check if any point in the polygon is within extent
+      for (const ring of geometry.coordinates) {
+        for (const [lon, lat] of ring) {
+          if (lon >= left && lon <= right && lat >= bottom && lat <= top) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } else if (geometry.type === 'LineString') {
+      for (const [lon, lat] of geometry.coordinates) {
+        if (lon >= left && lon <= right && lat >= bottom && lat <= top) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return false;
+  }
+
+    // Feature flags for unimplemented/deferred features - module-level scope
+  let PLACE_FILTER_SUPPORTED = false;        // Phase C - W.map.venueLayer styling not available
+  let AREA_HIDE_SUPPORTED = false;            // Phase C - Venue layer manipulation deferred
+  let GEOM_EDITING_SUPPORTED = false;         // Phase G - W.geometryEditing.activeEditor not available
+  let SPOT_ESTIMATOR_SUPPORTED = false;       // Phase C - Drawing tools not yet implemented
+  let NAV_POINT_HOVER_SUPPORTED = false;      // Phase C - Nav point hover effects deferred
+
   async function init(sdk) {
     loadTranslations();
     GLE = new GoogleLinkEnhancer();
@@ -160,7 +234,7 @@ var UpdateObject, MultiAction;
     $section.html(
       [
         '<h4 style="margin-bottom:0px;"><b>' + I18n.t('pie.prefs.title') + '</b></h4>',
-        '<h6 style="margin-top:0px;">' + curr_ver + '</h6>',
+        '<h6 style="margin-top:0px;">' + SCRIPT_VERSION + '</h6>',
         '<fieldset id="fieldPlaceFilter" style="border: 1px solid silver; padding: 8px; border-radius: 4px;">',
         '<legend style="margin-bottom:0px; border-bottom-style:none;width:auto;"><h4>' + I18n.t('pie.filter.PlaceFilterPanel') + '</h4></legend>',
         '<div class="controls-container pie-controls-container" id="divPlaceFilter">' +
@@ -2440,13 +2514,13 @@ var UpdateObject, MultiAction;
       for (const place of sdk.DataModel.Venues.getAll()) {
     const placeID = place.id;
         var venue = sdk.DataModel.Venues.getById({ venueId: placeID });
-        isPoint = venue.isPoint();
+        isPoint = venueIsPoint(venue);
         if ((isPoint && W.map.getZoom() >= 17) || (!isPoint && W.map.getZoom() >= 15)) {
-          if (isInMapExtent(venue.getOLGeometry())) {
-            if ((isPoint && showPoint) || (!isPoint && showArea && !venue.isParkingLot()) || (!isPoint && showPLA && venue.isParkingLot())) {
+          if (isInMapExtent(venue.geometry)) {
+            if ((isPoint && showPoint) || (!isPoint && showArea && !venueIsParkingLot(venue)) || (!isPoint && showPLA && venueIsParkingLot(venue))) {
               let placeFilter = $('#piePlaceFilter').val();
               if (placeFilter.length > 0) {
-                let nameMatch = RegExp($('#piePlaceFilter').val(), 'ig').exec(venue.attributes.name);
+                let nameMatch = RegExp($('#piePlaceFilter').val(), 'ig').exec(venue.name || '');
                 if (nameMatch && $('#_rbHidePlaces').prop('checked')) continue;
                 else if (!nameMatch && !$('#_rbHidePlaces').prop('checked'))
                   //no name match and show only
@@ -2455,9 +2529,9 @@ var UpdateObject, MultiAction;
 
               let textLoc;
 
-              if (isPoint) textLoc = new OpenLayers.Geometry.Point(venue.getOLGeometry().x, venue.getOLGeometry().y);
-              else textLoc = venue.getOLGeometry().getCentroid();
-              let placeName = WordWrap(venue.attributes.name.trim() + (showLock ? ' (L' + (venue.attributes.lockRank + 1) + ')' : ''));
+              if (isPoint) { const coords = venue.geometry.coordinates; textLoc = new OpenLayers.Geometry.Point(coords[0], coords[1]); }
+              else textLoc = venueGetCentroid(venue);
+              let lockStr = showLock ? (' (L' + ((venue.modificationData?.lockRank ?? 0) + 1) + ')') : ''; let placeName = WordWrap((venue.name || '').trim() + lockStr);
               if (venue.attributes.categories[0] === 'RESIDENCE_HOME')
                 placeName = venue.attributes.houseNumber + (venue.attributes.name.trim() !== '' ? ' - ' + venue.attributes.name : '') + (showLock ? ' (L' + (venue.attributes.lockRank + 1) + ')' : '');
               let placeNameLabel = new OpenLayers.Feature.Vector(textLoc, { display: 'block', labelText: placeName.trim(), yOffset: isPoint ? -13 - placeName.split('\n').length * 5 : 0 });
