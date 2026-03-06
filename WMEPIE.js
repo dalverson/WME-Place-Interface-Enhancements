@@ -1704,8 +1704,8 @@ var UpdateObject, MultiAction;
 
             let lon = ((geo.left + geo.right) / 2 + geo.right) / 2;
             let lat = ((geo.bottom + geo.top) / 2 + geo.bottom) / 2;
-            W.map.setCenter(new OpenLayers.Geometry.Point(lon, lat));
-            W.map.getOLMap().zoomTo(17);
+            sdk.Map.setMapCenter({ lonLat: { lon: lon, lat: lat } });
+            sdk.Map.setZoomLevel(17);
             sdk.Editing.clearSelection();
             sdk.Editing.setSelection({ selection: { ids: venueList.map(v => v.id || v), objectType: 'venue' } });
           };
@@ -3956,7 +3956,7 @@ var UpdateObject, MultiAction;
   function CenterOnPlace(venue, zoom) {
     if (!venue || !venue.geometry) return;
     var centroid = venueGetCentroid(venue);
-    if (centroid) W.map.setCenter([centroid.x, centroid.y], zoom);
+    if (centroid) sdk.Map.setMapCenter({ lonLat: { lon: centroid.x, lat: centroid.y }, zoomLevel: zoom });
   }
 
   function isChecked(checkboxId) {
