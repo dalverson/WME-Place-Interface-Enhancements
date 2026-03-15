@@ -2811,7 +2811,15 @@
       let $GeomMods = $(
         `<div class="form-group" id="pieGeometryMods"><label class="control-label">Geometry</label><div class="controls">${!isMapComment && !isPoint ? '<i id="pieorthogonalize" title="Orthogonalize" class="fa fa-plus-square-o fa-2x" aria-hidden="true" style="cursor:pointer;"></i> <i id="piesimplifyplace" title="Simplify" class="fa fa-magic fa-2x" aria-hidden="true" style="cursor:pointer;"></i>' : ''} ${!isPoint ? '<i id="pierotate" title="Allow rotating the Place" class="fa fa-repeat fa-2x" aria-hidden="true" style="cursor:pointer; color:' + (settings.Rotate ? 'rgb(0,180,0)' : 'black') + '"></i> <i id="pieresize" title="Allow resizing the Place. While enabled the geometry cannot be modified" class="fa fa-expand fa-2x" aria-hidden="true" style="cursor:pointer; color:' + (settings.Resize ? 'rgb(0,180,0)' : 'black') + '"></i>' : ''} <i id="pieEditGeom" class="fa fa-pencil-square-o fa-2x" aria-hidden="true" style="cursor:pointer;"></i> <i id="pieClearGeom" title="Clear geometry" class="fa fa-times fa-2x" aria-hidden="true" style="cursor:pointer; color:red;"></i></div></div>`,
       );
-      if (sdk.Editing.getSelection()?.objectType === 'mapComment') $('#edit-panel > div > div > div.tab-content > div > form > div:nth-child(4)').after($GeomMods);
+      if (sdk.Editing.getSelection()?.objectType === 'mapComment') {
+        $GeomMods.css({ background: 'var(--surface_default)', 'border-radius': '8px', padding: 'var(--space-xs) var(--space-s)', margin: 'var(--space-xs) 0' });
+        $GeomMods.prepend(
+          '<div style="font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--content_p3);padding-bottom:var(--space-xxs);margin-bottom:var(--space-xs);border-bottom:1px solid var(--hairline);">Place Interface Enhancements</div>',
+        );
+        const $anchor = $('.form-group.map-comment-types');
+        if ($anchor.length) $anchor.after($GeomMods);
+        else $('form.attributes-form.side-panel-section').append($GeomMods);
+      }
       else if ($('#AreaSize').length) {
         $GeomMods.css({ 'border-top': '1px solid var(--hairline)', 'margin-top': 'var(--space-xs)', 'padding-top': 'var(--space-xs)', 'margin-bottom': '0' });
         $('#AreaSize').append($GeomMods);
@@ -2837,13 +2845,21 @@
 
       $('#pieClearGeom').click(async function () {
         const sel = sdk.Editing.getSelection();
-        if (!sel || sel.objectType !== 'venue') return;
-        const selectedVenue = sdk.DataModel.Venues.getById({ venueId: sel.ids[0] });
-        if (!selectedVenue || selectedVenue.geometry.type === 'Point') return;
-        // Replace with a small square (~20m radius) centred on the venue
-        const center = turf.centroid(selectedVenue.geometry);
-        const smallSquare = turf.circle(center, 0.02, { steps: 4, units: 'kilometers' });
-        sdk.DataModel.Venues.updateVenue({ venueId: selectedVenue.id, geometry: smallSquare.geometry });
+        if (!sel) return;
+        if (sel.objectType === 'venue') {
+          const selectedVenue = sdk.DataModel.Venues.getById({ venueId: sel.ids[0] });
+          if (!selectedVenue || selectedVenue.geometry.type === 'Point') return;
+          // Replace with a small square (~20m radius) centred on the venue
+          const center = turf.centroid(selectedVenue.geometry);
+          const smallSquare = turf.circle(center, 0.02, { steps: 4, units: 'kilometers' });
+          sdk.DataModel.Venues.updateVenue({ venueId: selectedVenue.id, geometry: smallSquare.geometry });
+        } else if (sel.objectType === 'mapComment') {
+          const mc = sdk.DataModel.MapComments.getById({ mapCommentId: sel.ids[0] });
+          if (!mc || mc.geometry.type === 'Point') return;
+          const center = turf.centroid(mc.geometry);
+          const smallSquare = turf.circle(center, 0.02, { steps: 4, units: 'kilometers' });
+          sdk.DataModel.MapComments.updateComment({ mapCommentId: mc.id, geometry: smallSquare.geometry });
+        }
       });
 
       $('#pierotate').click(function () {
@@ -2875,7 +2891,7 @@
         if (settings.Rotate) sdk.Map.enablePolygonRotation();
         if (settings.Resize) sdk.Map.enablePolygonResize();
       }
-    } else if (!(getSelectedFeatures().length > 0) && lastSelectedFeature == 'venue') {
+    } else if (!(getSelectedFeatures().length > 0) && (lastSelectedFeature === 'venue' || lastSelectedFeature === 'mapComment')) {
       // SDK throws if rotation/resize was never enabled (e.g. last selected was a point place)
       try {
         sdk.Map.disablePolygonRotation();
