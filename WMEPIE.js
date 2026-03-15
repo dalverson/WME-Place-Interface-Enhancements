@@ -64,6 +64,28 @@
   let pieFilterHideMode = true; // true = hide matching venues, false = show only matching
   let pieHideAreaEnabled = false;
 
+  // WME DOM selectors — update here if WME changes panel structure
+  const WME_DOM = {
+    // Venue panel
+    venueEditGeneral:       '#venue-edit-general',
+    venueExternalProviders: '#venue-edit-general > .external-providers-control',
+    venueNameInput:         '#venue-edit-general wz-text-input[name="name"]',
+    venueAreaSize:          '#AreaSize',
+    venueDescription:       'div.description-control',
+    venueAliasActions:      '.alias-item-actions',
+    // Map comment panel
+    mcTypesSection:         '.form-group.map-comment-types',
+    mcAttributesForm:       'form.attributes-form.side-panel-section',
+    // Address edit
+    addressEditView:        '.address-edit-view',
+    addressEdit:            '.address-edit',
+    addressFullAddress:     '.full-address',
+    // Map / overlays
+    map:                    '#map',
+    wazeMap:                '#WazeMap',
+    photoViewerResults:     '#showDiv',
+  };
+
   // Maps sdk shortcutId → settings key (needed because HideAreaPlacesShortcut uses ToggleAreaPlacesShortcut setting)
   const _shortcutIdToSettingsKey = {
     HideAreaPlacesShortcut: 'ToggleAreaPlacesShortcut',
@@ -640,7 +662,7 @@
         $('#_cbShowAreaPlaceSizeMetric')[0].disabled = false;
       } else {
         removePlaceSizeHandlers();
-        $('#AreaSize').remove();
+        $(WME_DOM.venueAreaSize).remove();
         $('#_cbShowAreaPlaceSizeImperial')[0].disabled = true;
         $('#_cbShowAreaPlaceSizeMetric')[0].disabled = true;
       }
@@ -1234,7 +1256,7 @@
       display: 'none',
       'font-size': '13px',
     });
-    $('#map').append(mainDiv);
+    $(WME_DOM.map).append(mainDiv);
 
     //Div options
     let optDiv = document.createElement('div');
@@ -1243,7 +1265,7 @@
     /*optDiv.onclick = function(){
              $(optDiv).css('display', 'none');
         };*/
-    $('#map').append(optDiv);
+    $(WME_DOM.map).append(optDiv);
 
     let optDiv2 = document.createElement('div');
     optDiv2.className = 'photoViewerOptionsContainer';
@@ -1347,7 +1369,7 @@
     launchButton.innerHTML = '<i style="color:#666;font-size:20px;" class="fa fa-image"></i>';
     launchButton.id = 'photoViewerButton';
     tmpdiv.appendChild(launchButton);
-    $('#map').append(launchDiv);
+    $(WME_DOM.map).append(launchDiv);
 
     $('#sortBy')[0].value = settings.sortBy;
     $('#sortOrder')[0].value = settings.sortOrder;
@@ -1432,7 +1454,7 @@
   }
 
   async function Photos_show() {
-    $('#showDiv').html('');
+    $(WME_DOM.photoViewerResults).html('');
     let picCount = 0;
     let c = 0;
     for (let i = 0; catalog[i]; i++) {
@@ -1475,7 +1497,7 @@
         venueDiv.title = I18n.translations[I18n.currentLocale()].objects.venue.fields.adLocked;
         //continue; Hide POI if it's adloacked (option)
       }
-      $('#showDiv').append(venueDiv);
+      $(WME_DOM.photoViewerResults).append(venueDiv);
 
       // POI's Name
       let venueName = document.createElement('span');
@@ -1627,7 +1649,7 @@
               Photos_zoom(venue, imageid, approved);
               sdk.Editing.clearSelection();
               $('#venue-edit-photos').css('display', 'block');
-              $('#venue-edit-general').css('display', 'none');
+              $(WME_DOM.venueEditGeneral).css('display', 'none');
             };
           })(img.id, venue, img.isApproved),
           false,
@@ -1769,7 +1791,7 @@
     zoom.onclick = function () {
       zoom.remove();
     };
-    $('#map').append(zoom);
+    $(WME_DOM.map).append(zoom);
     $('#zoomDelete').click(async function () {
       DeleteImage(venue, id);
     });
@@ -2307,8 +2329,8 @@
   }
 
   async function editRPPAddress(rppTries = 1) {
-    if ($('.address-edit-view').length > 0) {
-      $('.full-address').trigger('click');
+    if ($(WME_DOM.addressEditView).length > 0) {
+      $(WME_DOM.addressFullAddress).trigger('click');
       await new Promise((r) => setTimeout(r, 150));
       $('input', $('.house-number')[0].shadowRoot).focus();
     } else if (rppTries < 1000) {
@@ -2641,7 +2663,7 @@
       ].join(' '),
     );
 
-    $('#WazeMap').append($section.html());
+    $(WME_DOM.wazeMap).append($section.html());
 
     updateGeometryInputs();
 
@@ -2816,19 +2838,19 @@
         $GeomMods.prepend(
           '<div style="font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--content_p3);padding-bottom:var(--space-xxs);margin-bottom:var(--space-xs);border-bottom:1px solid var(--hairline);">Place Interface Enhancements</div>',
         );
-        const $anchor = $('.form-group.map-comment-types');
+        const $anchor = $(WME_DOM.mcTypesSection);
         if ($anchor.length) $anchor.after($GeomMods);
-        else $('form.attributes-form.side-panel-section').append($GeomMods);
+        else $(WME_DOM.mcAttributesForm).append($GeomMods);
       }
-      else if ($('#AreaSize').length) {
+      else if ($(WME_DOM.venueAreaSize).length) {
         $GeomMods.css({ 'border-top': '1px solid var(--hairline)', 'margin-top': 'var(--space-xs)', 'padding-top': 'var(--space-xs)', 'margin-bottom': '0' });
-        $('#AreaSize').append($GeomMods);
+        $(WME_DOM.venueAreaSize).append($GeomMods);
       } else {
         $GeomMods.css({ background: 'var(--surface_default)', 'border-radius': '8px', padding: 'var(--space-xs) var(--space-s)', margin: 'var(--space-xs) 0' });
         $GeomMods.prepend(
           '<div style="font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--content_p3);padding-bottom:var(--space-xxs);margin-bottom:var(--space-xs);border-bottom:1px solid var(--hairline);">Place Interface Enhancements</div>',
         );
-        $('#venue-edit-general > .external-providers-control').after($GeomMods);
+        $(WME_DOM.venueExternalProviders).after($GeomMods);
       }
 
       $('#pieorthogonalize').click(async function () {
@@ -2904,7 +2926,7 @@
 
   function getOrCreateNameButtonContainer() {
     if (!$('#pieNameButtonsContainer').length) {
-      const $nameGroup = $('#venue-edit-general wz-text-input[name="name"]').parent();
+      const $nameGroup = $(WME_DOM.venueNameInput).parent();
       $nameGroup.css('position', 'relative');
       $nameGroup.prepend('<div id="pieNameButtonsContainer" style="position:absolute; top:4px; right:4px; z-index:100; display:flex; gap:4px; align-items:center;"></div>');
     }
@@ -2913,7 +2935,7 @@
 
   function getOrCreateAddressButtonContainer() {
     if (!$('#pieAddressButtonsContainer').length) {
-      const $addressGroup = $('.address-edit').closest('.form-group');
+      const $addressGroup = $(WME_DOM.addressEdit).closest('.form-group');
       $addressGroup.css('position', 'relative');
       $addressGroup.prepend('<div id="pieAddressButtonsContainer" style="position:absolute; top:4px; right:4px; z-index:100; display:flex; gap:4px; align-items:center;"></div>');
     }
@@ -3038,7 +3060,7 @@
       getOrCreateAddressButtonContainer().append($search);
 
       $('#pieSearchButton').click(function () {
-        let address = $('.full-address')[0]?.innerHTML;
+        let address = $(WME_DOM.addressFullAddress)[0]?.innerHTML;
         if (!address) return;
         const noCity = I18n.translations[I18n.currentLocale()].edit.address.no_city;
         if (address === I18n.translations[I18n.currentLocale()].edit.venue.no_address) return;
@@ -3063,8 +3085,8 @@
 
   function ShowClearDescription() {
     setTimeout(() => {
-      $('div.description-control').append('<i class="fa fa-times-circle clearButton" style="position:absolute; top:0; right:0;"></i>');
-      $('div.description-control').css('position', 'relative');
+      $(WME_DOM.venueDescription).append('<i class="fa fa-times-circle clearButton" style="position:absolute; top:0; right:0;"></i>');
+      $(WME_DOM.venueDescription).css('position', 'relative');
       $('.clearButton').click(async function () {
         sdk.DataModel.Venues.updateVenue({ venueId: getSelectedFeatures()[0].id, description: '' });
       });
@@ -3096,7 +3118,7 @@
             aliases.push(venue.name);
             sdk.DataModel.Venues.updateVenue({ venueId: venue.id, name: toPrimary, aliases: aliases });
           });
-        altItem.find('.alias-item-actions').append($button);
+        altItem.find(WME_DOM.venueAliasActions).append($button);
       }
     });
   }
@@ -3125,7 +3147,7 @@
 
   async function updatePlaceSizeDisplay() {
     const runId = ++_areaSizeRunId;
-    $('#AreaSize').remove();
+    $(WME_DOM.venueAreaSize).remove();
 
     // Wait for the venue panel DOM to finish rendering before inspecting or injecting.
     await new Promise((r) => setTimeout(r, 100));
@@ -3158,7 +3180,7 @@
               <div style="font-size:14px;color:var(--content_default);font-weight:500;">${parts.join(' · ')}</div>
               ${warningHtml}
             </div>`);
-            $('#venue-edit-general > .external-providers-control').after($area);
+            $(WME_DOM.venueExternalProviders).after($area);
           }
         }
       }
