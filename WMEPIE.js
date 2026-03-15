@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Place Interface Enhancements
 // @namespace    https://greasyfork.org/users/30701-justins83-waze
-// @version      2026.03.12.00
+// @version      2026.03.15.00
 // @description  Enhancements to various Place interfaces
 // @include      https://www.waze.com/editor*
 // @include      https://www.waze.com/*/editor*
@@ -393,190 +393,87 @@
     GLE = new SDKGoogleLinkEnhancer(sdk, turf, { layerName: 'PIE - Highlight closed Places' });
     hoursparser = new HoursParser();
 
-    var $section = $('<div>', { style: 'padding:8px 16px', id: 'WMEPIESettings' });
+    var $section = $('<div>', { id: 'WMEPIESettings' });
     $section.html(
       [
-        '<h4 style="margin-bottom:0px;"><b>' + I18n.t('pie.prefs.title') + '</b></h4>',
-        '<h6 style="margin-top:0px;">' + SCRIPT_VERSION + '</h6>',
-        '<fieldset id="fieldPlaceFilter" style="border: 1px solid silver; padding: 8px; border-radius: 4px;">',
-        '<legend style="margin-bottom:0px; border-bottom-style:none;width:auto;"><h4>' + I18n.t('pie.filter.PlaceFilterPanel') + '</h4></legend>',
-        '<div class="controls-container pie-controls-container" id="divPlaceFilter">' +
-          I18n.t('pie.filter.filter') +
-          ' <input type="text" name="txtPlaceFilter" id="piePlaceFilter" style="border: 1px solid #000000"/></div>',
-        '</br>',
-        '<div class="controls-container pie-controls-container" id="divPlaceFilterOptions"><input type="radio" id="_rbHidePlaces" name="PlaceFilterToggle" checked><label for="_rbHidePlaces">' +
-          I18n.t('pie.filter.Hide') +
-          '</label><input type="radio" id="_rbOnlyShowPlaces" name="PlaceFilterToggle"><label for="_rbOnlyShowPlaces">' +
-          I18n.t('pie.filter.Show') +
-          '</label></div>',
-        '</fieldset>',
+        // Header
+        `<div class="pie-header">`,
+        `<div class="pie-header-title">${I18n.t('pie.prefs.title')}</div>`,
+        `<div class="pie-header-version">${SCRIPT_VERSION}</div>`,
+        `</div>`,
 
-        '<fieldset id="fieldPlacePanel" style="border: 1px solid silver; padding: 8px; border-radius: 4px;">',
-        '<legend style="margin-bottom:0px; border-bottom-style:none;width:auto;"><h4>' + I18n.t('pie.prefs.PropertiesPanel') + '</h4></legend>',
-        '<div class="controls-container pie-controls-container" id="divAreaPlaceSizeControls">',
-        '<div id="divShowAreaPlaceSize" class="controls-container pie-controls-container"><input type="checkbox" id="_cbShowAreaPlaceSize" class="pieSettingsCheckbox" /><label for="_cbShowAreaPlaceSize">' +
-          I18n.t('pie.prefs.ShowAreaPlaceSize') +
-          '</label></div>',
-        '<div id="divShowAreaPlaceSizeImperial"class="controls-container pie-controls-container" style="padding-left:20px;"><input type="checkbox" id="_cbShowAreaPlaceSizeImperial" class="pieSettingsCheckbox" disabled /><label for ="_cbShowAreaPlaceSizeImperial">' +
-          I18n.t('pie.prefs.ShowImperial') +
-          '</label></div>',
-        '<div id="divShowAreaPlaceSizeMetric" class="controls-container pie-controls-container" style="padding-left:20px;"><input type="checkbox" id="_cbShowAreaPlaceSizeMetric" class="pieSettingsCheckbox" disabled /><label for ="_cbShowAreaPlaceSizeMetric">' +
-          I18n.t('pie.prefs.ShowMetric') +
-          '</label></div>',
-        '</div>',
-        //!WazeWrap.isBetaEditor ? '<div class="controls-container pie-controls-container" id="divShowLockButtonsRPP" title="' + I18n.t('pie.prefs.ShowRPPLockButtonsTitle') + '"><input type="checkbox" id="_cbShowLockButtonsRPP" class="pieSettingsCheckbox" /><label for="_cbShowLockButtonsRPP" style="white-space:pre-line;">' + I18n.t('pie.prefs.ShowRPPLockButtons') + '</label></div>' : '',
-        '<div class="controls-container pie-controls-container" id="divShowPlaceLocatorCrosshair" title="' +
-          I18n.t('pie.prefs.ShowPlaceLocatorCrosshairTitle') +
-          '" ><input type="checkbox" id="_cbShowPlaceLocatorCrosshair" class="pieSettingsCheckbox" /><label for="_cbShowPlaceLocatorCrosshair" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ShowPlaceLocatorCrosshair') +
-          '</label></br>',
-        '<span class="controls-container pie-controls-container" style="padding-left:30px;" title=""><input type="checkbox" id="_cbPlaceLocatorCrosshairProdPL" class="pieSettingsCheckbox" /><label for="_cbPlaceLocatorCrosshairProdPL" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ProdPL') +
-          '</label></span></br>',
-        '<span class="controls-container pie-controls-container" style="padding-left:30px;" title="' +
-          I18n.t('pie.prefs.ZoomTitle') +
-          '">' +
-          I18n.t('pie.prefs.Zoom') +
-          ' <select id="piePlaceZoom"><option value="22">22</option><option value="21">21</option><option value="20">20</option><option value="19">19</option><option value="18">18</option><option value="17">17</option><option value="16">16</option><option value="15">15</option><option value="14">14</option><option value="13">13</option><option value="12">12</option></select></span></div>',
-        '<div class="controls-container pie-controls-container" id="divShowSearchButton" title="' +
-          I18n.t('pie.prefs.ShowAddressSearchTitle') +
-          '"><input type="checkbox" id="_cbShowSearchButton" class="pieSettingsCheckbox"/><label for="_cbShowSearchButton" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ShowAddressSearch') +
-          '</label></div>',
-        '<div class="controls-container pie-controls-container" id="divAddPlaceCategoriesButtons" style="opacity:0.45;"><input type="checkbox" id="_cbAddPlaceCategoriesButtons" disabled/><label for="_cbAddPlaceCategoriesButtons" style="white-space:pre-line; text-decoration:line-through;">' +
-          I18n.t('pie.prefs.ShowPlaceCategoryButtons') +
-          ' (Deprecated)</label></div>',
-        '<div class="controls-container pie-controls-container" id="divShowCopyPlaceButton" title="' +
-          I18n.t('pie.prefs.ShowCopyPlaceButtonTitle') +
-          '" ><input type="checkbox" id="_cbShowCopyPlaceButton" class="pieSettingsCheckbox" /><label for="_cbShowCopyPlaceButton" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ShowCopyPlaceButton') +
-          '</label></div>',
-        '<div class="controls-container pie-controls-container" id="divShowExternalProviderTooltip" title="' +
-          I18n.t('pie.prefs.ShowGPIDTooltipTitle') +
-          '" ><input type="checkbox" id="_cbShowExternalProviderTooltip" class="pieSettingsCheckbox" /><label for="_cbShowExternalProviderTooltip" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ShowGPIDTooltip') +
-          '</label></div>',
-        '<div class="controls-container pie-controls-container" id="divClearDescription" title="' +
-          I18n.t('pie.prefs.ClearDescriptionTitle') +
-          '" ><input type="checkbox" id="_cbClearDescription" class="pieSettingsCheckbox" /><label for="_cbClearDescription" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ClearDescription') +
-          '</label></div>',
-        //'<div class="controls-container pie-controls-container" id="divMoveAddress" title="' + I18n.t('pie.prefs.MoveAddressTitle') + '"><input type="checkbox" id="_cbMoveAddress" class="pieSettingsCheckbox"/><label for="_cbMoveAddress" style="white-space:pre-line;">' + I18n.t('pie.prefs.MoveAddress') + '</label></div>',
-        //'<div class="controls-container pie-controls-container" id="divMoveHNEntry" title="' + I18n.t('pie.prefs.MoveHNEntryTitle') + '"><input type="checkbox" id="_cbMoveHNEntry" class="pieSettingsCheckbox"/><label for="_cbMoveHNEntry" style="white-space:pre-line;">' + I18n.t('pie.prefs.MoveHNEntry') + '</label></div>',
-        '<br>',
-        '<div class="controls-container pie-controls-container" id="divHidePaymentType" style="opacity:0.45;"><input type="checkbox" id="_cbHidePaymentType" disabled/><label for="_cbHidePaymentType" style="white-space:pre-line; text-decoration:line-through;">' +
-          I18n.t('pie.prefs.HidePaymentType') +
-          ' (Deprecated)</label></div>',
-        `<div class="controls-container pie-controls-container" id="divGeometryMods" title="${I18n.t('pie.prefs.GeometryModsTitle')}"><input type="checkbox" id="_cbGeometryMods" class="pieSettingsCheckbox" /><label for="_cbGeometryMods" style="white-space:pre-line;">${I18n.t('pie.prefs.GeometryMods')}</label></div>`,
-        `<div class="controls-container pie-controls-container" id="divSimplifyFactor" style="padding-left:20px;" title="${I18n.t('pie.prefs.SimplifyFactorTitle')}"> ${I18n.t('pie.prefs.SimplifyFactor')} <input type="number" min="0" max="10" step=".5" style="width:45px; height:20px;" id="pieSimplifyFactor"></div>`,
-        `<div class="controls-container pie-controls-container" id="divHideShopAndServices" style="opacity:0.45;"><input type="checkbox" id="_cbHideShopAndServices" disabled/><label for="_cbHideShopAndServices" style="white-space:pre-line; text-decoration:line-through;">${I18n.t('pie.prefs.HideShoppingServices')} (Deprecated)</label></div>`,
-        '</fieldset>',
+        // --- Section 1: Place Filter ---
+        `<div class="pie-section" id="fieldPlaceFilter">`,
+        `<div class="pie-section-header"><i class="fa fa-filter"></i><span class="pie-section-title">${I18n.t('pie.filter.PlaceFilterPanel')}</span><i class="fa fa-chevron-down pie-chevron"></i></div>`,
+        `<div class="pie-section-body">`,
+        `<div id="divPlaceFilter" class="pie-filter-row"><span class="pie-toggle-label">${I18n.t('pie.filter.filter')}</span><input type="text" name="txtPlaceFilter" id="piePlaceFilter" class="pie-text-input"></div>`,
+        `<div id="divPlaceFilterOptions"><div class="pie-pill-group"><label class="pie-pill"><input type="radio" id="_rbHidePlaces" name="PlaceFilterToggle" checked><span>${I18n.t('pie.filter.Hide')}</span></label><label class="pie-pill"><input type="radio" id="_rbOnlyShowPlaces" name="PlaceFilterToggle"><span>${I18n.t('pie.filter.Show')}</span></label></div></div>`,
+        `</div></div>`,
 
-        '<fieldset id="fieldNewPlaces" style="border: 1px solid silver; padding: 8px; border-radius: 4px;">',
-        '<legend style="margin-bottom:0px; border-bottom-style:none;width:auto;"><h4>' + I18n.t('pie.prefs.NewPlaces') + '</h4></legend>',
-        '<div id="divEditRPPAfterCreated" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.EditRPPAfterCreateTitle') +
-          '"><input type="checkbox" id="_cbEditRPPAfterCreated" class="pieSettingsCheckbox"><label for="_cbEditRPPAfterCreated" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.EditRPPAfterCreate') +
-          '</label></div>',
-        '<div id="divUseStreetFromClosestSeg" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.UseStreetFromClosestSegmentTitle') +
-          '"><input type="checkbox" id="_cbUseStreetFromClosestSeg" class="pieSettingsCheckbox"><label for="_cbUseStreetFromClosestSeg" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.UseStreetFromClosestSegment') +
-          '</label></div>',
-        '<div id="divUseCityFromClosestSeg" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.UseCityFromClosestSegmentTitle') +
-          '"><input type="checkbox" id="_cbUseCityFromClosestSeg" class="pieSettingsCheckbox"><label for="_cbUseCityFromClosestSeg" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.UseCityFromClosestSegment') +
-          '</label></div>',
-        '<div id="divUseAltCity" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.ClosestSegmentAltCityTitle') +
-          '" style="padding-left:20px; word-wrap: break-word;"><input type="checkbox" id="_cbUseAltCity" class="pieSettingsCheckbox"><label for="_cbUseAltCity" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ClosestSegmentAltCity') +
-          '</label></div>',
-        '<div id="divSkipPLR" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.ClosestSegmentIgnorePLRUnnamedPRTitle') +
-          '"><input type="checkbox" id="_cbSkipPLR" class="pieSettingsCheckbox"/><label for="_cbSkipPLR" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ClosestSegmentIgnorePLRUnnamedPR') +
-          '</label></div>',
-        '<div id="divDefaultLockLevel" class="controls-container pie-controls-container" style="left:8px;" title="' +
-          I18n.t('pie.prefs.LockLevelTitle') +
-          '">' +
-          I18n.t('pie.prefs.LockLevel') +
-          '<select id="pieDefaultLockLevel">' +
-          buildLockLevelsList() +
-          '</select></div>',
-        '</fieldset>',
+        // --- Section 2: Properties Panel ---
+        `<div class="pie-section" id="fieldPlacePanel">`,
+        `<div class="pie-section-header"><i class="fa fa-map-marker"></i><span class="pie-section-title">${I18n.t('pie.prefs.PropertiesPanel')}</span><i class="fa fa-chevron-down pie-chevron"></i></div>`,
+        `<div class="pie-section-body" id="divAreaPlaceSizeControls">`,
+        `<div id="divShowAreaPlaceSize" class="pie-toggle-row"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowAreaPlaceSize')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowAreaPlaceSize" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowAreaPlaceSizeImperial" class="pie-toggle-row pie-sub-row"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowImperial')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowAreaPlaceSizeImperial" class="pieSettingsCheckbox" disabled><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowAreaPlaceSizeMetric" class="pie-toggle-row pie-sub-row"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowMetric')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowAreaPlaceSizeMetric" class="pieSettingsCheckbox" disabled><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowPlaceLocatorCrosshair" class="pie-toggle-row" title="${I18n.t('pie.prefs.ShowPlaceLocatorCrosshairTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowPlaceLocatorCrosshair')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowPlaceLocatorCrosshair" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div class="pie-toggle-row pie-sub-row"><span class="pie-toggle-label">${I18n.t('pie.prefs.ProdPL')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbPlaceLocatorCrosshairProdPL" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div class="pie-toggle-row pie-sub-row" title="${I18n.t('pie.prefs.ZoomTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.Zoom')}</span><select id="piePlaceZoom" class="pie-select"><option value="22">22</option><option value="21">21</option><option value="20">20</option><option value="19">19</option><option value="18">18</option><option value="17">17</option><option value="16">16</option><option value="15">15</option><option value="14">14</option><option value="13">13</option><option value="12">12</option></select></div>`,
+        `<div id="divShowSearchButton" class="pie-toggle-row" title="${I18n.t('pie.prefs.ShowAddressSearchTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowAddressSearch')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowSearchButton" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowCopyPlaceButton" class="pie-toggle-row" title="${I18n.t('pie.prefs.ShowCopyPlaceButtonTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowCopyPlaceButton')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowCopyPlaceButton" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowExternalProviderTooltip" class="pie-toggle-row" title="${I18n.t('pie.prefs.ShowGPIDTooltipTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowGPIDTooltip')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowExternalProviderTooltip" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divClearDescription" class="pie-toggle-row" title="${I18n.t('pie.prefs.ClearDescriptionTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ClearDescription')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbClearDescription" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divGeometryMods" class="pie-toggle-row" title="${I18n.t('pie.prefs.GeometryModsTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.GeometryMods')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbGeometryMods" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divSimplifyFactor" class="pie-toggle-row pie-sub-row" title="${I18n.t('pie.prefs.SimplifyFactorTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.SimplifyFactor')}</span><input type="number" min="0" max="10" step=".5" class="pie-select" style="width:60px;" id="pieSimplifyFactor"></div>`,
+        `</div></div>`,
 
-        '<fieldset id="fieldMapMods" style="border: 1px solid silver; padding: 8px; border-radius: 4px;">',
-        '<legend style="margin-bottom:0px; border-bottom-style:none;width:auto;"><h4>' + I18n.t('pie.prefs.MapChanges') + '</h4></legend>',
-        '<div id="divShowNames" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.ShowPlaceNames') +
-          '"><input type="checkbox" id="_cbShowPlaceNames" class="pieSettingsCheckbox" /><label for="_cbShowPlaceNames">' +
-          I18n.t('pie.prefs.ShowPlaceNames') +
-          '</label></div>',
-        '<br><div id="divShowNamesPoint"class="controls-container pie-controls-container" style="padding-left:20px;" title="' +
-          I18n.t('pie.prefs.ShowPointNamesTitle') +
-          '"><input type="checkbox" id="_cbShowPlaceNamesPoint" class="pieSettingsCheckbox" disabled /><label for ="_cbShowPlaceNamesPoint">' +
-          I18n.t('pie.prefs.ShowPointNames') +
-          '</label></div>',
-        '<div id="divShowNamesArea"class="controls-container pie-controls-container" style="padding-left:20px;" title="' +
-          I18n.t('pie.prefs.ShowAreaNamesTitle') +
-          '"><input type="checkbox" id="_cbShowPlaceNamesArea" class="pieSettingsCheckbox" disabled /><label for ="_cbShowPlaceNamesArea">' +
-          I18n.t('pie.prefs.ShowAreaNames') +
-          '</label></div>',
-        '<br><div id="divShowNamesPLA"class="controls-container pie-controls-container" style="padding-left:20px;" title="' +
-          I18n.t('pie.prefs.ShowPLANameTitle') +
-          '"><input type="checkbox" id="_cbShowPlaceNamesPLA" class="pieSettingsCheckbox" disabled /><label for ="_cbShowPlaceNamesPLA">' +
-          I18n.t('pie.prefs.ShowPLAName') +
-          '</label></div>',
-        '<br><div id="divShowNamesLock"class="controls-container pie-controls-container" style="padding-left:20px;" title="' +
-          I18n.t('pie.prefs.ShowLockLevelTitle') +
-          '"><input type="checkbox" id="_cbShowPlaceNamesLock" class="pieSettingsCheckbox" disabled /><label for ="_cbShowPlaceNamesLock">' +
-          I18n.t('pie.prefs.ShowLockLevel') +
-          '</label></div>',
-        `<br><div id="divhidePlaceNamesWhenPlacesHidden" class="controls-container pie-controls-container" style="padding-left:20px;" title="${I18n.t('pie.prefs.hidePlaceNamesWhenPlacesHiddenTitle')}"><input type="checkbox" id="_cbhidePlaceNamesWhenPlacesHidden" class="pieSettingsCheckbox" disabled /><label for="_cbhidePlaceNamesWhenPlacesHidden">${I18n.t('pie.prefs.hidePlaceNamesWhenPlacesHidden')}</label></div>`,
-        '<div id="divPlaceNamesFontCustomization" class="controls-container pie-controls-container" style="padding-left:20px;">',
-        I18n.t('pie.prefs.FontSize') + ' <input type="text" size="1" id="piePlaceNameFontSize"/>px</br>',
-        I18n.t('pie.prefs.FontColor') + ' <input type="color" id="colorPickerFont" style="width:30px;height:20px;padding:1px;border:2px solid black;cursor:pointer;vertical-align:middle;"/></br>',
-        '<input type="checkbox" id="_cbPlaceNameFontBold" class="pieSettingsCheckbox"/><label for ="_cbPlaceNameFontBold">' + I18n.t('pie.prefs.Bold') + '</label></br>',
-        I18n.t('pie.prefs.FontOutlineColor') +
-          ' <input type="color" id="colorPickerFontOutline" style="width:30px;height:20px;padding:1px;border:2px solid black;cursor:pointer;vertical-align:middle;"/></br>',
-        I18n.t('pie.prefs.FontOutlineWidth') + ' <input type="text" size="1" id="piePlaceNameFontOutlineWidth"/>',
-        '</div>',
-        '<div id="divShowNavPointClosestSegmentOnHover" class="controls-container pie-controls-container" title=""><input type="checkbox" id="_cbShowNavPointClosestSegmentOnHover" class="pieSettingsCheckbox" /><label for="_cbShowNavPointClosestSegmentOnHover" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ShowNavPointClosestSegmentOnHover') +
-          '</label></div>',
-        '<div id="divShowClosestSegmentSelected" class="controls-container pie-controls-container" title=""><input type="checkbox" id="_cbShowClosestSegmentSelected" class="pieSettingsCheckbox" /><label for="_cbShowClosestSegmentSelected" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.ShowClosestSegmentSelected') +
-          '</label></div>',
-        '<div id="divEnableGLE" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.EnableGLETitle') +
-          '"><input type="checkbox" id="_cbEnableGLE" class="pieSettingsCheckbox"/><label for="_cbEnableGLE" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.EnableGLE') +
-          '</label></div>',
-        '<div id="divGLEShowTempClosed" class="controls-container pie-controls-container" style="padding-left:20px;" title=""><input type="checkbox" id="_cbGLEShowTempClosed" class="pieSettingsCheckbox" disabled/><label for="_cbGLEShowTempClosed">' +
-          I18n.t('pie.prefs.GLEShowTempClosed') +
-          '</label></div>',
-        '<div id="divOpenPUR" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.OpenPURTitle') +
-          '"><input type="checkbox" id="_cbOpenPUR" class="pieSettingsCheckbox"/><label for="_cbOpenPUR" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.OpenPUR') +
-          '</label></div>',
-        '<div id="divEnablePhotoViewer" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.PhotoViewerTitle') +
-          '"><input type="checkbox" id="_cbEnablePhotoViewer" class="pieSettingsCheckbox"/><label for="_cbEnablePhotoViewer" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.PhotoViewer') +
-          '</label></div>',
-        '<div id="divEnlargeGeoHandles" class="controls-container pie-controls-container" title="' +
-          I18n.t('pie.prefs.EnlargeGeoHandlesTitle') +
-          '"><input type="checkbox" id="_cbEnlargeGeoHandles" class="pieSettingsCheckbox"/><label for="_cbEnlargeGeoHandles" style="white-space:pre-line;">' +
-          I18n.t('pie.prefs.EnlargeGeoHandles') +
-          '</label></div>',
-        '</fieldset>',
-        '<div class="controls-container" id="divPlaceMenuCustomization">',
-        '<b>' + I18n.t('pie.prefs.PlaceMenuCustomization') + '</b>',
-        '<div style="font-size:0.8em; color:#888; margin:2px 0 6px;">' + I18n.t('pie.prefs.PlaceMenuCustomizationSubtitle') + '</div>',
+        // --- Section 3: New Places ---
+        `<div class="pie-section" id="fieldNewPlaces">`,
+        `<div class="pie-section-header"><i class="fa fa-plus-circle"></i><span class="pie-section-title">${I18n.t('pie.prefs.NewPlaces')}</span><i class="fa fa-chevron-down pie-chevron"></i></div>`,
+        `<div class="pie-section-body">`,
+        `<div id="divEditRPPAfterCreated" class="pie-toggle-row" title="${I18n.t('pie.prefs.EditRPPAfterCreateTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.EditRPPAfterCreate')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbEditRPPAfterCreated" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divUseStreetFromClosestSeg" class="pie-toggle-row" title="${I18n.t('pie.prefs.UseStreetFromClosestSegmentTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.UseStreetFromClosestSegment')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbUseStreetFromClosestSeg" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divUseCityFromClosestSeg" class="pie-toggle-row" title="${I18n.t('pie.prefs.UseCityFromClosestSegmentTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.UseCityFromClosestSegment')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbUseCityFromClosestSeg" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divUseAltCity" class="pie-toggle-row pie-sub-row" title="${I18n.t('pie.prefs.ClosestSegmentAltCityTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ClosestSegmentAltCity')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbUseAltCity" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divSkipPLR" class="pie-toggle-row" title="${I18n.t('pie.prefs.ClosestSegmentIgnorePLRUnnamedPRTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ClosestSegmentIgnorePLRUnnamedPR')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbSkipPLR" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divDefaultLockLevel" class="pie-toggle-row" title="${I18n.t('pie.prefs.LockLevelTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.LockLevel')}</span><select id="pieDefaultLockLevel" class="pie-select">${buildLockLevelsList()}</select></div>`,
+        `</div></div>`,
+
+        // --- Section 4: Map Features ---
+        `<div class="pie-section" id="fieldMapMods">`,
+        `<div class="pie-section-header"><i class="fa fa-map"></i><span class="pie-section-title">${I18n.t('pie.prefs.MapChanges')}</span><i class="fa fa-chevron-down pie-chevron"></i></div>`,
+        `<div class="pie-section-body">`,
+        `<div id="divShowNames" class="pie-toggle-row" title="${I18n.t('pie.prefs.ShowPlaceNames')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowPlaceNames')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowPlaceNames" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowNamesPoint" class="pie-toggle-row pie-sub-row" title="${I18n.t('pie.prefs.ShowPointNamesTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowPointNames')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowPlaceNamesPoint" class="pieSettingsCheckbox" disabled><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowNamesArea" class="pie-toggle-row pie-sub-row" title="${I18n.t('pie.prefs.ShowAreaNamesTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowAreaNames')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowPlaceNamesArea" class="pieSettingsCheckbox" disabled><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowNamesPLA" class="pie-toggle-row pie-sub-row" title="${I18n.t('pie.prefs.ShowPLANameTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowPLAName')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowPlaceNamesPLA" class="pieSettingsCheckbox" disabled><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowNamesLock" class="pie-toggle-row pie-sub-row" title="${I18n.t('pie.prefs.ShowLockLevelTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowLockLevel')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowPlaceNamesLock" class="pieSettingsCheckbox" disabled><span class="pie-slider"></span></label></div>`,
+        `<div id="divhidePlaceNamesWhenPlacesHidden" class="pie-toggle-row pie-sub-row" title="${I18n.t('pie.prefs.hidePlaceNamesWhenPlacesHiddenTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.hidePlaceNamesWhenPlacesHidden')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbhidePlaceNamesWhenPlacesHidden" class="pieSettingsCheckbox" disabled><span class="pie-slider"></span></label></div>`,
+        // Font customization sub-card
+        `<div id="divPlaceNamesFontCustomization" class="pie-font-settings">`,
+        `<div class="pie-font-row"><span>${I18n.t('pie.prefs.FontSize')}</span><span><input type="text" size="2" id="piePlaceNameFontSize" class="pie-select"> px</span></div>`,
+        `<div class="pie-font-row"><span>${I18n.t('pie.prefs.FontColor')}</span><input type="color" id="colorPickerFont" style="width:30px;height:20px;padding:1px;cursor:pointer;border:1px solid #ccc;border-radius:3px;"></div>`,
+        `<div class="pie-font-row"><span>${I18n.t('pie.prefs.Bold')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbPlaceNameFontBold" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div class="pie-font-row"><span>${I18n.t('pie.prefs.FontOutlineColor')}</span><input type="color" id="colorPickerFontOutline" style="width:30px;height:20px;padding:1px;cursor:pointer;border:1px solid #ccc;border-radius:3px;"></div>`,
+        `<div class="pie-font-row"><span>${I18n.t('pie.prefs.FontOutlineWidth')}</span><span><input type="text" size="2" id="piePlaceNameFontOutlineWidth" class="pie-select"> px</span></div>`,
+        `<div class="pie-font-reset"><button id="_btnResetFontDefaults"><i class="fa fa-undo"></i> Reset to defaults</button></div>`,
+        `</div>`,
+        `<div id="divShowNavPointClosestSegmentOnHover" class="pie-toggle-row"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowNavPointClosestSegmentOnHover')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowNavPointClosestSegmentOnHover" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divShowClosestSegmentSelected" class="pie-toggle-row"><span class="pie-toggle-label">${I18n.t('pie.prefs.ShowClosestSegmentSelected')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbShowClosestSegmentSelected" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divEnableGLE" class="pie-toggle-row" title="${I18n.t('pie.prefs.EnableGLETitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.EnableGLE')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbEnableGLE" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divGLEShowTempClosed" class="pie-toggle-row pie-sub-row"><span class="pie-toggle-label">${I18n.t('pie.prefs.GLEShowTempClosed')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbGLEShowTempClosed" class="pieSettingsCheckbox" disabled><span class="pie-slider"></span></label></div>`,
+        `<div id="divOpenPUR" class="pie-toggle-row" title="${I18n.t('pie.prefs.OpenPURTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.OpenPUR')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbOpenPUR" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divEnablePhotoViewer" class="pie-toggle-row" title="${I18n.t('pie.prefs.PhotoViewerTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.PhotoViewer')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbEnablePhotoViewer" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `<div id="divEnlargeGeoHandles" class="pie-toggle-row" title="${I18n.t('pie.prefs.EnlargeGeoHandlesTitle')}"><span class="pie-toggle-label">${I18n.t('pie.prefs.EnlargeGeoHandles')}</span><label class="pie-toggle-switch"><input type="checkbox" id="_cbEnlargeGeoHandles" class="pieSettingsCheckbox"><span class="pie-slider"></span></label></div>`,
+        `</div></div>`,
+
+        // --- Section 5: Quick-Create Shortcuts ---
+        `<div class="pie-section" id="divPlaceMenuCustomization">`,
+        `<div class="pie-section-header"><i class="fa fa-th-list"></i><span class="pie-section-title">${I18n.t('pie.prefs.PlaceMenuCustomization')}</span><i class="fa fa-chevron-down pie-chevron"></i></div>`,
+        `<div class="pie-section-body">`,
+        `<div class="pie-section-subtitle">${I18n.t('pie.prefs.PlaceMenuCustomizationSubtitle')}</div>`,
+        `<div class="pie-quick-create-list">`,
         buildItemOption(1),
         buildItemOption(2),
         buildItemOption(3),
@@ -589,8 +486,9 @@
         buildItemOption(10),
         buildItemOption(11),
         buildItemOption(12),
-        '</div>',
-      ].join(' '),
+        `</div>`,
+        `</div></div>`,
+      ].join(''),
     );
 
     //Load settings
@@ -615,11 +513,17 @@
     injectCss();
     const { tabLabel, tabPane } = await sdk.Sidebar.registerScriptTab();
     tabLabel.innerText = 'PIE';
+    tabPane.classList.add('wme-pie-panel');
     tabPane.innerHTML = $section.html();
     init2();
   }
 
   function init2() {
+    // Collapsible section headers
+    $(document).on('click', '.wme-pie-panel .pie-section-header', function () {
+      $(this).closest('.pie-section').toggleClass('pie-collapsed');
+    });
+
     sdk.Events.trackDataModelEvents({ dataModelName: 'venues' });
     sdk.Events.trackLayerEvents({ layerName: 'venues' });
 
@@ -1062,6 +966,21 @@
 
     $('#piePlaceNameFontOutlineWidth').keypress(function (event) {
       if (event.which < 48 || event.which > 57) event.preventDefault();
+    });
+
+    $('#_btnResetFontDefaults').on('click', function () {
+      settings.PlaceNameFontSize = '12';
+      settings.PlaceNameFontOutlineWidth = 3;
+      settings.PlaceNameFontBold = true;
+      settings.PlaceNameFontColor = '#FFFFFF';
+      settings.PlaceNameFontOutline = '#000000';
+      $('#piePlaceNameFontSize')[0].value = settings.PlaceNameFontSize;
+      $('#piePlaceNameFontOutlineWidth')[0].value = settings.PlaceNameFontOutlineWidth;
+      setChecked('_cbPlaceNameFontBold', settings.PlaceNameFontBold);
+      $('#colorPickerFont').val(settings.PlaceNameFontColor);
+      $('#colorPickerFontOutline').val(settings.PlaceNameFontOutline);
+      saveSettings();
+      DisplayPlaceNames();
     });
 
     $('#pieSimplifyFactor').focusout(async function () {
@@ -2644,27 +2563,35 @@
 
   function ViewEditPlaceGeom() {
     $('#pieViewEditGeom').remove();
-    var $section = $('<div>', { style: 'padding:8px 16px' });
+    const isMapComment = sdk.Editing.getSelection()?.objectType === 'mapComment';
+    const applyBtn = (id) => !isMapComment ? `<button class="pie-geom-apply-btn" id="${id}">Apply</button>` : '';
+    var $section = $('<div>');
     $section.html(
       [
-        '<div id="pieViewEditGeom" style="padding:8px 16px; position:fixed; z-index:1000; border-radius:10px; box-shadow:5px 5px 10px silver; top:25%; left:30%; background-color:white; min-width:100px; min-height:100px;">', //Main div
-        '<div class="content">',
-        '<div style="width:100%; height:18px;"><i class="fa fa-window-close" aria-hidden="true" style="float:right; cursor:pointer;" id="pieGeomClose"></i></div>',
-        '<div style="float:left; margin-right:20px;"><h3>Standard (lat, lon)</h3>',
-        '<div><textarea rows="7" cols="40" id="piePlaceGeomStandard" style="height:auto;"></textarea></div>',
-        !(sdk.Editing.getSelection()?.objectType === 'mapComment') ? '<button id="pieBtnApplyStandardGeom">Apply</button>' : '',
+        '<div id="pieViewEditGeom" class="pie-geom-modal">',
+        '<div class="pie-geom-modal-header">',
+        '<span class="pie-geom-modal-title"><i class="fa fa-pencil-square-o"></i> Edit Geometry</span>',
+        '<i class="fa fa-times pie-geom-modal-close" id="pieGeomClose" title="Close"></i>',
         '</div>',
-        '<div style="float:left; margin-right:20px;"><h3>Waze (lon lat)</h3>',
-        '<div><textarea rows="7" cols="40" id="piePlaceGeomWaze" style="height:auto;"></textarea></div>',
-        !(sdk.Editing.getSelection()?.objectType === 'mapComment') ? '<button id="pieBtnApplyWazeGeom">Apply</button>' : '',
+        '<div class="pie-geom-modal-body">',
+        '<div class="pie-geom-col">',
+        '<div class="pie-geom-col-label">Standard <span class="pie-geom-col-hint">lat, lon</span></div>',
+        `<textarea id="piePlaceGeomStandard" class="pie-geom-textarea" rows="15" spellcheck="false"></textarea>`,
+        applyBtn('pieBtnApplyStandardGeom'),
         '</div>',
-        '<div style="float:left;"><h3>WKT</h3>',
-        '<div><textarea rows="7" cols="45" id="piePlaceGeomWKT" style="height:auto;"></textarea></div>',
-        !(sdk.Editing.getSelection()?.objectType === 'mapComment') ? '<button id="pieBtnApplyWKTGeom">Apply</button>' : '',
+        '<div class="pie-geom-col">',
+        '<div class="pie-geom-col-label">Waze <span class="pie-geom-col-hint">lon lat</span></div>',
+        `<textarea id="piePlaceGeomWaze" class="pie-geom-textarea" rows="15" spellcheck="false"></textarea>`,
+        applyBtn('pieBtnApplyWazeGeom'),
         '</div>',
-        '</div>', //end content div
-        '</div>', //end main div
-      ].join(' '),
+        '<div class="pie-geom-col">',
+        '<div class="pie-geom-col-label">WKT</div>',
+        `<textarea id="piePlaceGeomWKT" class="pie-geom-textarea" rows="15" spellcheck="false"></textarea>`,
+        applyBtn('pieBtnApplyWKTGeom'),
+        '</div>',
+        '</div>',
+        '</div>',
+      ].join(''),
     );
 
     $(WME_DOM.wazeMap).append($section.html());
@@ -2676,17 +2603,21 @@
       const polygonGeometry = [];
 
       for (let i = 0; i < lines.length; i++) {
-        if (!/^(-?\d*(?:\.\d*)?),\s?(-?\d*(?:\.\d*))$/.test(lines[i])) {
+        if (lines[i].trim().length === 0) continue;
+        if (!/^(-?\d*(?:\.\d*)?),\s?(-?\d*(?:\.\d*))$/.test(lines[i].trim())) {
           WazeWrap.Alerts.error(GM_info.script.name, 'Incorrectly formatted coordinates');
           return;
         }
-        const coords = lines[i].match(/^(-?\d*(?:\.\d*)?),\s?(-?\d*(?:\.\d*))$/);
+        const coords = lines[i].trim().match(/^(-?\d*(?:\.\d*)?),\s?(-?\d*(?:\.\d*))$/);
         // Standard format is "lat, lon" — coords[1]=lat, coords[2]=lon
         polygonGeometry.push([parseFloat(coords[2]), parseFloat(coords[1])]);
       }
 
       saveNewPlaceGeometry(polygonGeometry);
       updateGeometryInputs();
+      const $btn = $(this);
+      $btn.text('✓ Applied').prop('disabled', true);
+      setTimeout(() => { $btn.text('Apply').prop('disabled', false); }, 1500);
     });
 
     $('#pieBtnApplyWazeGeom').click(function () {
@@ -2708,13 +2639,19 @@
 
       saveNewPlaceGeometry(polygonGeometry);
       updateGeometryInputs();
+      const $btn = $(this);
+      $btn.text('✓ Applied').prop('disabled', true);
+      setTimeout(() => { $btn.text('Apply').prop('disabled', false); }, 1500);
     });
 
     $('#pieBtnApplyWKTGeom').click(function () {
-      const lines = $('#piePlaceGeomWKT')
-        .val()
-        .match(/POLYGON\((.*)\)/)[1]
-        .split(',');
+      const raw = $('#piePlaceGeomWKT').val().replace(/\s+/g, ' ').trim();
+      const match = raw.match(/POLYGON\s*\(\s*(.*?)\s*\)/i);
+      if (!match) {
+        WazeWrap.Alerts.error(GM_info.script.name, 'Invalid WKT format');
+        return;
+      }
+      const lines = match[1].split(',');
       const polygonGeometry = [];
 
       for (let i = 0; i < lines.length; i++) {
@@ -2727,8 +2664,17 @@
         polygonGeometry.push([parseFloat(coords[1]), parseFloat(coords[2])]);
       }
 
+      // WKT rings include the closing point (first == last) — strip it so
+      // saveNewPlaceGeometry() doesn't double-close the ring.
+      const first = polygonGeometry[0];
+      const last = polygonGeometry[polygonGeometry.length - 1];
+      if (first && last && first[0] === last[0] && first[1] === last[1]) polygonGeometry.pop();
+
       saveNewPlaceGeometry(polygonGeometry);
       updateGeometryInputs();
+      const $btn = $(this);
+      $btn.text('✓ Applied').prop('disabled', true);
+      setTimeout(() => { $btn.text('Apply').prop('disabled', false); }, 1500);
     });
 
     $('#pieGeomClose').click(async function () {
@@ -3244,51 +3190,172 @@
   }
 
   function injectCss() {
-    var css = [
-      // Lock button formatting
-      '.btn-lh {cursor:pointer;padding:1px 6px;height:22px;border:solid 1px #c1c1c1;margin-right:3px;}',
-      '.btn.btn-lh.btn-lh-selected {background-color:#6999ae;color:white}',
-      '.btn.btn-lh.btn-lh-selected:hover {color:white}',
-      '.btn.btn-lh.disabled {color:#909090;background-color:#f7f7f7;}',
-      '.btn.btn-lh.btn-lh-selected.disabled {color:white;background-color:#6999ae;}',
-      //Settings Panel
-      '#sidebar .controls-container.pie-controls-container {padding: 0px;}',
-      '.select2-choices {-webkit-animation-name: oldCategoryDetected; -webkit-animation-duration: 10s; -webkit-animation-iteration-count: 0; animation-name: oldCategoryDetected; animation-duration: 3s; animation-iteration-count: 0;}',
-      //'@keyframes oldCategoryDetected {0% {border-color:rgb(204, 204, 204); border-width:3px;} 50%  {border-color:red; border-width:3px;} 100% {border-color:rgb(204, 204, 204); border-width:3px;}}',
-      //Image Dialog Enhancement
-      '.imgcon {position:relative; margin:0 auto;}',
-      '.imnav {color: #ffffff; margin:0 auto; opacity:0.7; display:none; position:absolute; top:0; left:0px; width:100%; height:89%;}',
-      '.imgcon:hover .imnav{display:inline-block;}',
-      '.control {float:left; height:100%; width:33%; opacity:0;}',
-      '.control:hover {opacity:0.7;}',
-      '.prim {width:15%; background:url("http://i59.tinypic.com/294s94i.gif")left center no-repeat;}',
-      '.zmim {width:70%;}',
-      '.neim {width:15%; background:url("http://i62.tinypic.com/2cqfqxf.gif")right center no-repeat;}',
-      //PSE
-      '.PSESelected {border: 3px solid #ee9900;}',
-      //hijacking new WME Place icons
-      '.pie-car-services {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -29px -63px; width: 14px; height: 13px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) { .pie-car-services {background-image: url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-transportation {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -56px -63px; width: 12px; height: 12px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-transportation {background-image: url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png);background-size: 99px 87px; } }',
-      '.pie-professional-and-public {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: 0px -76px; width: 13px; height: 11px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-professional-and-public {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-shopping-and-services {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -88px 0px; width: 11px; height: 13px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-shopping-and-services {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-food-and-drink {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -65px 0px; width: 13px; height: 16px; } @mediait-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-food-and-drink {background-image:ditor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-culture-and-entertainement {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -30px -37px; width: 16px; height: 14px; }edia (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-culture-and-entertainement {background-image:ditor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-other {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: 0px -63px; width: 15px; height: 13px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-other {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-lodging {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -20px -52px; width: 17px; height: 10px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-lodging {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-outdoors {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: 0px -52px; width: 20px; height: 11px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-outdoors {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-natural-features {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -16px -21px; width: 17px; height: 15px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-natural-features {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-parking-lot {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -65px -48px; width: 13px; height: 13px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-parking-lot {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.pie-residential {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -15px -37px; width: 15px; height: 14px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-residential {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }',
-      '.photoViewerOptionsContainer { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto; grid-template-areas: "header header" "optionText optionSetting" "footer footer"}',
-      '.photoViewerOptionsHeader { text-align: center; grid-area: header; }',
-      '.photoViewerOptionsOptionSetting { grid-area: optionSetting; }',
-      '.photoViewerOptionsOptionText {grid-area: optionText; }',
-      '.photoViewerOptionsFooter { text-align: center; grid-area: footer; }',
-      '.photoViewerOptionsOptionText div { height:32px;}',
-      '.photoViewerOptionsOptionSetting div { height:32px;}',
-      '.photoViewerOptionsOptionText div span { vertical-align: middle; line-height:32px;}',
-      '.photoViewerOptionsOptionSetting div span { vertical-align: middle; line-height:32px;}',
-    ].join(' ');
+    var css = `
+      /* ── Lock buttons (map overlay, unchanged) ─────────────────── */
+      .btn-lh {cursor:pointer;padding:1px 6px;height:22px;border:solid 1px #c1c1c1;margin-right:3px;}
+      .btn.btn-lh.btn-lh-selected {background-color:#6999ae;color:white}
+      .btn.btn-lh.btn-lh-selected:hover {color:white}
+      .btn.btn-lh.disabled {color:#909090;background-color:#f7f7f7;}
+      .btn.btn-lh.btn-lh-selected.disabled {color:white;background-color:#6999ae;}
+      /* ── Image dialog (unchanged) ──────────────────────────────── */
+      .imgcon {position:relative; margin:0 auto;}
+      .imnav {color:#fff; margin:0 auto; opacity:0.7; display:none; position:absolute; top:0; left:0; width:100%; height:89%;}
+      .imgcon:hover .imnav {display:inline-block;}
+      .control {float:left; height:100%; width:33%; opacity:0;}
+      .control:hover {opacity:0.7;}
+      .prim {width:15%; background:url("http://i59.tinypic.com/294s94i.gif") left center no-repeat;}
+      .zmim {width:70%;}
+      .neim {width:15%; background:url("http://i62.tinypic.com/2cqfqxf.gif") right center no-repeat;}
+      /* ── PSE (unchanged) ───────────────────────────────────────── */
+      .PSESelected {border:3px solid #ee9900;}
+      /* ── Category icon sprites (unchanged) ─────────────────────── */
+      .pie-car-services {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -29px -63px; width: 14px; height: 13px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) { .pie-car-services {background-image: url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-transportation {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -56px -63px; width: 12px; height: 12px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-transportation {background-image: url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png);background-size: 99px 87px; } }
+      .pie-professional-and-public {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: 0px -76px; width: 13px; height: 11px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-professional-and-public {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-shopping-and-services {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -88px 0px; width: 11px; height: 13px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-shopping-and-services {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-food-and-drink {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -65px 0px; width: 13px; height: 16px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-food-and-drink {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-culture-and-entertainement {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -30px -37px; width: 16px; height: 14px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-culture-and-entertainement {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-other {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: 0px -63px; width: 15px; height: 13px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-other {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-lodging {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -20px -52px; width: 17px; height: 10px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-lodging {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-outdoors {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: 0px -52px; width: 20px; height: 11px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-outdoors {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-natural-features {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -16px -21px; width: 17px; height: 15px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-natural-features {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-parking-lot {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -65px -48px; width: 13px; height: 13px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-parking-lot {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      .pie-residential {background-image: url(//editor-assets.waze.com/beta/img/toolbar022c8e4d1f16c3825705364ff337bf1b.png); background-position: -15px -37px; width: 15px; height: 14px; } @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {.pie-residential {background-image:url(//editor-assets.waze.com/beta/img/toolbar@2xcd8b2ab08e978d00eeee7817e1a0edda.png); background-size: 99px 87px; } }
+      /* ── Photo viewer dialog (unchanged) ───────────────────────── */
+      .photoViewerOptionsContainer { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto; grid-template-areas: "header header" "optionText optionSetting" "footer footer"; }
+      .photoViewerOptionsHeader { text-align: center; grid-area: header; }
+      .photoViewerOptionsOptionSetting { grid-area: optionSetting; }
+      .photoViewerOptionsOptionText { grid-area: optionText; }
+      .photoViewerOptionsFooter { text-align: center; grid-area: footer; }
+      .photoViewerOptionsOptionText div, .photoViewerOptionsOptionSetting div { height: 32px; }
+      .photoViewerOptionsOptionText div span, .photoViewerOptionsOptionSetting div span { vertical-align: middle; line-height: 32px; }
+
+      /* ════════════════════════════════════════════════════════════
+         PIE SIDEBAR PANEL — Modern UI
+         ════════════════════════════════════════════════════════════ */
+
+      /* Panel wrapper */
+      .wme-pie-panel { font-family: Arial, sans-serif; font-size: 12px; color: #333; padding: 8px 10px; box-sizing: border-box; }
+
+      /* Header */
+      .wme-pie-panel .pie-header { background: linear-gradient(135deg, #0066cc, #0052a3); color: #fff; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; display: flex; align-items: baseline; justify-content: space-between; }
+      .wme-pie-panel .pie-header-title { font-size: 13px; font-weight: 700; }
+      .wme-pie-panel .pie-header-version { font-size: 10px; opacity: 0.8; }
+
+      /* Collapsible sections */
+      .wme-pie-panel .pie-section { border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 7px; background: #fafafa; overflow: hidden; }
+      .wme-pie-panel .pie-section-header { display: flex; align-items: center; gap: 6px; padding: 7px 10px; cursor: pointer; background: linear-gradient(135deg, #f8f9fa, #f0f1f3); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #333; user-select: none; }
+      .wme-pie-panel .pie-section-header:hover { background: linear-gradient(135deg, #f0f1f3, #e8eaed); }
+      .wme-pie-panel .pie-section-header .fa:first-child { color: #0066cc; width: 14px; text-align: center; font-size: 11px; }
+      .wme-pie-panel .pie-section-title { flex: 1; }
+      .wme-pie-panel .pie-chevron { color: #aaa; font-size: 10px; transition: transform 0.2s ease; }
+      .wme-pie-panel .pie-section.pie-collapsed .pie-chevron { transform: rotate(-90deg); }
+      .wme-pie-panel .pie-section-body { padding: 6px 10px 8px; background: #fff; }
+      .wme-pie-panel .pie-section.pie-collapsed .pie-section-body { display: none; }
+      .wme-pie-panel .pie-section-subtitle { font-size: 10px; color: #888; margin-bottom: 6px; }
+
+      /* Toggle rows */
+      .wme-pie-panel .pie-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; min-height: 26px; }
+      .wme-pie-panel .pie-toggle-row + .pie-toggle-row { border-top: 1px solid #f2f2f2; }
+      .wme-pie-panel .pie-sub-row { padding-left: 14px; }
+      .wme-pie-panel .pie-toggle-label { flex: 1; font-size: 11px; color: #333; padding-right: 8px; line-height: 1.3; }
+
+      /* Toggle switch */
+      .wme-pie-panel .pie-toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+      .wme-pie-panel .pie-toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+      .wme-pie-panel .pie-slider { position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 20px; transition: background 0.2s; }
+      .wme-pie-panel .pie-slider:before { content: ""; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+      .wme-pie-panel .pie-toggle-switch input:checked + .pie-slider { background: #0066cc; }
+      .wme-pie-panel .pie-toggle-switch input:checked + .pie-slider:before { transform: translateX(16px); }
+      .wme-pie-panel .pie-toggle-switch input:disabled + .pie-slider { opacity: 0.4; cursor: not-allowed; }
+
+      /* Pill radio group (Place Filter) */
+      .wme-pie-panel .pie-filter-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+      .wme-pie-panel .pie-filter-row .pie-toggle-label { flex-shrink: 0; flex-grow: 0; }
+      .wme-pie-panel .pie-pill-group { display: flex; background: #e9ecef; border-radius: 6px; padding: 2px; }
+      .wme-pie-panel .pie-pill { flex: 1; }
+      .wme-pie-panel .pie-pill input { display: none; }
+      .wme-pie-panel .pie-pill span { display: block; text-align: center; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; color: #666; white-space: nowrap; }
+      .wme-pie-panel .pie-pill input:checked + span { background: #0066cc; color: #fff; font-weight: 600; box-shadow: 0 1px 3px rgba(0,102,204,.3); }
+      .wme-pie-panel .pie-pill span:hover { color: #0066cc; }
+      .wme-pie-panel .pie-pill input:checked + span:hover { color: #fff; }
+
+      /* Form controls */
+      .wme-pie-panel .pie-text-input { flex: 1; border: 1px solid #d0d0d0; border-radius: 4px; padding: 4px 6px; font-size: 11px; color: #333; min-width: 0; }
+      .wme-pie-panel .pie-text-input:focus { border-color: #0066cc; outline: none; box-shadow: 0 0 0 2px rgba(0,102,204,.12); }
+      .wme-pie-panel .pie-select { border: 1px solid #d0d0d0; border-radius: 4px; padding: 2px 5px; font-size: 11px; color: #333; background: #fff; }
+      .wme-pie-panel .pie-select:focus { border-color: #0066cc; outline: none; }
+
+      /* Font customization sub-card */
+      .wme-pie-panel .pie-font-settings { background: #f5f7fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 5px 8px; margin: 4px 0 6px; }
+      .wme-pie-panel .pie-font-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; font-size: 11px; color: #333; }
+      .wme-pie-panel .pie-font-row + .pie-font-row { border-top: 1px solid #ebebeb; }
+
+      /* Font reset button */
+      .wme-pie-panel .pie-font-reset { display: flex; justify-content: center; padding-top: 5px; margin-top: 3px; border-top: 1px solid #e0e0e0; }
+      .wme-pie-panel .pie-font-reset button { background: none; border: none; color: #0066cc; font-size: 10px; cursor: pointer; padding: 2px 8px; border-radius: 3px; }
+      .wme-pie-panel .pie-font-reset button:hover { background: #edf2f7; text-decoration: underline; }
+      [wz-theme="dark"] .wme-pie-panel .pie-font-reset { border-top-color: #3c4043; }
+      [wz-theme="dark"] .wme-pie-panel .pie-font-reset button { color: #33ccff; }
+      [wz-theme="dark"] .wme-pie-panel .pie-font-reset button:hover { background: #3c4043; }
+
+      /* Quick-create list */
+      .wme-pie-panel .pie-quick-create-list { display: flex; flex-direction: column; gap: 3px; }
+      .wme-pie-panel .pie-quick-create-list > div { padding: 2px 0; }
+      .wme-pie-panel .pie-quick-create-list select { font-size: 11px; border: 1px solid #d0d0d0; border-radius: 3px; }
+
+      /* ── Geometry editor modal ─────────────────────────────────── */
+      #pieViewEditGeom.pie-geom-modal { position: fixed; z-index: 1000; top: 20%; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,.22), 0 2px 8px rgba(0,0,0,.12); font-family: Arial, sans-serif; font-size: 12px; min-width: 560px; max-width: 95vw; overflow: hidden; }
+      .pie-geom-modal-header { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #0066cc, #0052a3); color: #fff; padding: 8px 12px; }
+      .pie-geom-modal-title { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; display: flex; align-items: center; gap: 6px; }
+      .pie-geom-modal-close { cursor: pointer; font-size: 14px; opacity: 0.85; padding: 2px 4px; border-radius: 3px; }
+      .pie-geom-modal-close:hover { opacity: 1; background: rgba(255,255,255,.2); }
+      .pie-geom-modal-body { display: flex; gap: 10px; padding: 12px; overflow: auto; }
+      .pie-geom-col { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 140px; }
+      .pie-geom-col-label { font-size: 11px; font-weight: 700; color: #333; text-transform: uppercase; letter-spacing: 0.04em; }
+      .pie-geom-col-hint { font-size: 10px; font-weight: 400; color: #888; text-transform: none; letter-spacing: 0; }
+      .pie-geom-textarea { width: 100%; box-sizing: border-box; border: 1px solid #d0d0d0; border-radius: 4px; padding: 5px 6px; font-family: 'Courier New', monospace; font-size: 11px; color: #222; background: #fafafa; resize: both; line-height: 1.5; min-height: 240px; max-height: 600px; max-width: 500px; }
+      .pie-geom-textarea:focus { border-color: #0066cc; outline: none; box-shadow: 0 0 0 2px rgba(0,102,204,.12); background: #fff; }
+      .pie-geom-apply-btn { width: 100%; padding: 4px 0; background: #0066cc; color: #fff; border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; letter-spacing: 0.02em; }
+      .pie-geom-apply-btn:hover { background: #0052a3; }
+      .pie-geom-apply-btn:active { background: #003d7a; }
+
+      /* ── Dark mode ──────────────────────────────────────────────── */
+      [wz-theme="dark"] .wme-pie-panel { color: #e8eaed; }
+      [wz-theme="dark"] .wme-pie-panel .pie-header { background: linear-gradient(135deg, #0052a3, #003d7a); }
+      [wz-theme="dark"] .wme-pie-panel .pie-section { border-color: #55595e; background: #2d2f33; }
+      [wz-theme="dark"] .wme-pie-panel .pie-section-header { background: linear-gradient(135deg, #2a2c30, #202124); color: #e8eaed; }
+      [wz-theme="dark"] .wme-pie-panel .pie-section-header:hover { background: linear-gradient(135deg, #333538, #2a2c30); }
+      [wz-theme="dark"] .wme-pie-panel .pie-section-header .fa:first-child { color: #33ccff; }
+      [wz-theme="dark"] .wme-pie-panel .pie-section-body { background: #28292c; }
+      [wz-theme="dark"] .wme-pie-panel .pie-toggle-row + .pie-toggle-row { border-top-color: #3c4043; }
+      [wz-theme="dark"] .wme-pie-panel .pie-toggle-label { color: #e8eaed; }
+      [wz-theme="dark"] .wme-pie-panel .pie-slider { background: #555; }
+      [wz-theme="dark"] .wme-pie-panel .pie-toggle-switch input:checked + .pie-slider { background: #0066cc; }
+      [wz-theme="dark"] .wme-pie-panel .pie-pill-group { background: #3c4043; }
+      [wz-theme="dark"] .wme-pie-panel .pie-pill span { color: #b7babf; }
+      [wz-theme="dark"] .wme-pie-panel .pie-pill input:checked + span { background: #0066cc; color: #fff; }
+      [wz-theme="dark"] .wme-pie-panel .pie-pill span:hover { color: #33ccff; }
+      [wz-theme="dark"] .wme-pie-panel .pie-text-input { background: #3c4043; border-color: #55595e; color: #e8eaed; }
+      [wz-theme="dark"] .wme-pie-panel .pie-text-input:focus { border-color: #33ccff; box-shadow: 0 0 0 2px rgba(51,204,255,.15); }
+      [wz-theme="dark"] .wme-pie-panel .pie-select { background: #3c4043; border-color: #55595e; color: #e8eaed; }
+      [wz-theme="dark"] .wme-pie-panel .pie-font-settings { background: #2d2f33; border-color: #55595e; }
+      [wz-theme="dark"] .wme-pie-panel .pie-font-row { color: #e8eaed; }
+      [wz-theme="dark"] .wme-pie-panel .pie-font-row + .pie-font-row { border-top-color: #3c4043; }
+      [wz-theme="dark"] .wme-pie-panel .pie-section-subtitle { color: #90959c; }
+      [wz-theme="dark"] .wme-pie-panel .pie-quick-create-list select { background: #3c4043; border-color: #55595e; color: #e8eaed; }
+      [wz-theme="dark"] .wme-pie-panel .pie-chevron { color: #777; }
+
+      /* ── Geometry modal dark mode ───────────────────────────────── */
+      [wz-theme="dark"] #pieViewEditGeom.pie-geom-modal { background: #28292c; box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.3); }
+      [wz-theme="dark"] .pie-geom-modal-header { background: linear-gradient(135deg, #0052a3, #003d7a); }
+      [wz-theme="dark"] .pie-geom-col-label { color: #e8eaed; }
+      [wz-theme="dark"] .pie-geom-col-hint { color: #90959c; }
+      [wz-theme="dark"] .pie-geom-textarea { background: #3c4043; border-color: #55595e; color: #e8eaed; }
+      [wz-theme="dark"] .pie-geom-textarea:focus { border-color: #33ccff; box-shadow: 0 0 0 2px rgba(51,204,255,.15); background: #2d2f33; }
+      [wz-theme="dark"] .pie-geom-apply-btn { background: #0066cc; }
+      [wz-theme="dark"] .pie-geom-apply-btn:hover { background: #0052a3; }
+    `;
     $('<style type="text/css">' + css + '</style>').appendTo('head');
   }
 
@@ -3496,29 +3563,29 @@
           ShowMetric: 'Show metric',
           ShowRPPLockButtons: 'Show lock buttons for RPPs',
           ShowRPPLockButtonsTitle: 'Displays lock level buttons for Residential Place Points',
-          ShowPlaceLocatorCrosshair: 'Show Place locator crosshair',
+          ShowPlaceLocatorCrosshair: 'Place locator crosshair',
           ShowPlaceLocatorCrosshairTitle: 'Centers the Place on screen and zooms to the defined level',
           Zoom: 'Zoom',
           ZoomTitle: 'The zoom level to use when centering on a Place',
-          ShowAddressSearch: 'Show search button next to address',
+          ShowAddressSearch: 'Address search button',
           ShowAddressSearchTitle: "Show a magnifying glass next to the Place's address.  Clicking this button will load the address into the search box",
           ShowPlaceCategoryButtons: 'Add Place category buttons above the categories selection',
           ShowPLAButton: 'Show parking lot button',
           ShowPLAButtonTitle: "Starts creation mode for a Parking Lot Area Place and will set the name to match this Place\'s name when complete",
-          ShowCopyPlaceButton: 'Show copy Place button',
+          ShowCopyPlaceButton: 'Copy place button',
           ShowCopyPlaceButtonTitle: 'Copies the selected Place to a new Place with identical settings',
-          ShowGPIDTooltip: 'Show External Provider tooltip',
+          ShowGPIDTooltip: 'External provider tooltip',
           ShowGPIDTooltipTitle: 'Displays a tooltip with the external provider information',
           NewPlaces: 'New Places',
-          EditRPPAfterCreate: 'Edit RPP address after created',
+          EditRPPAfterCreate: 'Open RPP address on create',
           EditRPPAfterCreateTitle: 'Automatically opens the RPP address edit window and focuses on the House Number entry',
-          UseStreetFromClosestSegment: 'Use street name from closest segment',
+          UseStreetFromClosestSegment: 'Street from closest segment',
           UseStreetFromClosestSegmentTitle: "Pulls the street name from the closest visible segment and inserts into the new Place's address",
-          UseCityFromClosestSegment: 'Use city name from closest segment',
+          UseCityFromClosestSegment: 'City from closest segment',
           UseCityFromClosestSegmentTitle: "Pulls the city name from the closest visible segment and inserts into the new Place's address",
-          ClosestSegmentAltCity: 'When the primary is "No city" look for an alt city',
+          ClosestSegmentAltCity: 'Use alt city when primary has none',
           ClosestSegmentAltCityTitle: "When the primary is 'No city' try to find an alt street name with a city",
-          ClosestSegmentIgnorePLRUnnamedPR: "Ignore PLRs & unnamed PR when using closest segment's name and city",
+          ClosestSegmentIgnorePLRUnnamedPR: 'Ignore PLRs & unnamed PR',
           ClosestSegmentIgnorePLRUnnamedPRTitle: 'When looking for the closest segment, PLRs and unnamed PRs will be ignored',
           LockLevel: 'Lock level',
           LockLevelTitle: 'The lock level to set automatically when creating new Places',
@@ -3535,7 +3602,7 @@
           ShowPLANameTitle: '',
           Item: 'Item',
           PlaceMenuCustomization: 'Quick-Create Place Shortcuts',
-          ClearDescription: 'Show clear description button',
+          ClearDescription: 'Clear description button',
           ClearDescriptionTitle: 'Adds a clear button to the top right of the description entry that when clicked will clear all text in the entry field',
           PropertiesPanel: 'Properties Panel',
           FontSize: 'Font size',
@@ -3543,7 +3610,7 @@
           Bold: 'Bold',
           FontOutlineColor: 'Font outline color',
           FontOutlineWidth: 'Font outline width',
-          ProdPL: 'Force production PL',
+          ProdPL: 'Use production permalink',
           MoveAddress: 'Move address to top of panel',
           MoveAddressTitle: 'Moves the address editor to the top of the properties panel',
           ShowParkingSpaceEstimatorTool: 'Show Parking Space Estimator tool',
@@ -3561,18 +3628,18 @@
           PSEShowPSEButton: 'Show Parking Space Estimator tool button',
           PSEShowPSEButtonTitle: 'Shows the button to launch the Parking Space Estimator tool',
           PSEDisplayButtonTitle: 'Opens the Parking Space Estimator tool',
-          ShowNavPointClosestSegmentOnHover: 'Display the nav point and closest segment line on hover',
-          ShowClosestSegmentSelected: 'Display a line from the nav point to the point on the closest segment',
+          ShowNavPointClosestSegmentOnHover: 'Nav point & closest segment on hover',
+          ShowClosestSegmentSelected: 'Nav point to closest segment line',
           EnableGLE: 'Enable Google Link Enhancer',
           EnableGLETitle:
             'Highlights closed Google links in red, linked Google POIs > 400m from the Waze Place in teal, invalid Google links in magenta, Google POIs linked multiple times in orange, already linked POI in gray (autocomplete menu)',
-          OpenPUR: 'Automatically open PUR',
+          OpenPUR: 'Auto-open PUR',
           OpenPURTitle: 'Automatically opens the PUR associated with the selected Place',
           HidePaymentType: 'Hide payment type',
           HidePaymentTypeTitle: 'Hide the Payment Type section when the cost is set to Free',
-          GeometryMods: 'Enable geometry modification options',
+          GeometryMods: 'Geometry tools',
           GeometryModsTitle: 'Enables options for modifying the geometry such as: orthogonalization, ability to rotate or resize (scale up/down) area Places',
-          SimplifyFactor: 'Simplify Factor',
+          SimplifyFactor: 'Simplify factor',
           SimplifyFactorTitle: 'The larger the simplification factor the more nodes will be removed',
           PhotoViewer: 'Enable photo viewer',
           PhotoViewerTitle: '',
@@ -3582,7 +3649,7 @@
           EnlargeGeoHandlesTitle: 'Makes the geometry handles on area Places larger so they are easier to grab to adjust the size',
           hidePlaceNamesWhenPlacesHidden: 'Hide Place names for hidden Places',
           hidePlaceNamesWhenPlacesHiddenTitle: 'When enabled, any Place that is hidden (either via the filter or hiding area Places shortcut) will not show their name on the map',
-          GLEShowTempClosed: 'Highlight closed Places',
+          GLEShowTempClosed: 'Highlight closed places',
           GLEShowTempClosedTitle: 'Shows/hides the PIE - Highlight closed Places layer (permanently and temporarily closed places)',
           PlaceMenuCustomizationSubtitle: 'Select a category per slot. To assign keys, open WME Settings → Keyboard Shortcuts.',
           CreateResidentialPlaceDesc: 'Creates a residential Place point',
@@ -3631,30 +3698,30 @@
           ShowMetric: 'Sistema Métrico',
           ShowRPPLockButtons: 'Mostrar botones de bloqueo para RPPs',
           ShowRPPLockButtonsTitle: 'Muestra los botones de nivel de bloqueo para lugares residenciales',
-          ShowPlaceLocatorCrosshair: 'Mostrar reticula localizadora del lugar',
+          ShowPlaceLocatorCrosshair: 'Retícula localizadora del lugar',
           ShowPlaceLocatorCrosshairTitle: 'Centra el lugar en la pantalla y acercamiento al nivel definido',
           Zoom: 'Acercamiento',
           ZoomTitle: 'Nivel de acercamiento a utilizar cuando se centra en un lugar',
-          ShowAddressSearch: 'Mostrar el botón de búsqueda junto a la dirección',
+          ShowAddressSearch: 'Botón de búsqueda de dirección',
           ShowAddressSearchTitle: 'Muestra una lupa junto a la dirección del lugar. Al hacer clic en este botón, se cargará la dirección en la barra de búsqueda',
           ShowPlaceCategoryButtons: 'Botones de categorías de lugares',
           ShowPLAButton: 'Mostrar botón de PLAs',
           ShowPLAButtonTitle:
             'Inicia el modo de creación de un lugar del área de estacionamiento y establecerá el nombre del estacionamiento para que coincida con el nombre del lugar cuando se complete',
-          ShowCopyPlaceButton: 'Mostrar botón de copiado de lugar',
+          ShowCopyPlaceButton: 'Botón para copiar lugar',
           ShowCopyPlaceButtonTitle: 'Copia el lugar seleccionado en un lugar nuevo con configuraciones idénticas',
-          ShowGPIDTooltip: 'Mostrar información del proveedor externo',
+          ShowGPIDTooltip: 'Información del proveedor externo',
           ShowGPIDTooltipTitle: 'Muestra un texto con la información del proveedor externo',
           NewPlaces: 'Nuevos lugares',
           EditRPPAfterCreate: 'Editar la dirección del RPP una vez creada',
           EditRPPAfterCreateTitle: 'Automáticamente abre la ventana de edición en la dirección del lugar residencial y se enfoca en el campo de número de casa',
-          UseStreetFromClosestSegment: 'Utilizar el nombre de la calle del segmento más cercano',
+          UseStreetFromClosestSegment: 'Calle del segmento más cercano',
           UseStreetFromClosestSegmentTitle: 'Extrae el nombre de la calle del segmento visible más cercano y lo agrega en la dirección del nuevo lugar',
-          UseCityFromClosestSegment: 'Usar el nombre de la ciudad del segmento más cercano',
+          UseCityFromClosestSegment: 'Ciudad del segmento más cercano',
           UseCityFromClosestSegmentTitle: 'Extrae el nombre de la ciudad del segmento visible más cercano y lo agrega en la dirección del nuevo lugar',
           ClosestSegmentAltCity: "Buscar una ciudad alternativa cuando la ciudad principal sea 'Ninguno'",
           ClosestSegmentAltCityTitle: 'Cuando la ciudad principal es "Ninguno" trata de encontrar un nombre de calle alternativo con una ciudad',
-          ClosestSegmentIgnorePLRUnnamedPR: 'Ignorar los PLR y PR sin nombre cuando utilice el nombre y la ciudad del segmento más cercano',
+          ClosestSegmentIgnorePLRUnnamedPR: 'Ignorar PLRs y PR sin nombre',
           ClosestSegmentIgnorePLRUnnamedPRTitle: 'Ignorar segmentos de estacionamiento o privados al buscar el segmento mas cercano',
           LockLevel: 'Nivel de bloqueo',
           LockLevelTitle: 'El nivel de bloqueo para establecer automáticamente al crear nuevos lugares',
@@ -3671,7 +3738,7 @@
           ShowPLANameTitle: 'Muestra el nombre de áreas de estacionamiento (PLAs)',
           Item: 'Opción',
           PlaceMenuCustomization: 'Personalización del menú de lugares',
-          ClearDescription: 'Mostrar botón de borrar descripción',
+          ClearDescription: 'Botón borrar descripción',
           ClearDescriptionTitle: 'Añade un botón de borrado en la parte superior derecha del campo de descripción que deja vacíos todos los campos',
           PropertiesPanel: 'Propiedades del panel',
           FontSize: 'Tamaño de letra',
@@ -3697,8 +3764,8 @@
           PSEShowPSEButton: 'Mostrar botón del estimador de espacios de estacionamiento',
           PSEShowPSEButtonTitle: 'Muestra el botón para iniciar el estimador de espacios de estacionamiento',
           PSEDisplayButtonTitle: 'Abre el estimador de espacios de estacionamiento',
-          ShowNavPointClosestSegmentOnHover: 'Mostrar la línea del punto de navegación al segmento más cercano al pasar el cursor',
-          ShowClosestSegmentSelected: 'Mostrar una línea desde el punto de navegación hasta el punto en el segmento más cercano',
+          ShowNavPointClosestSegmentOnHover: 'Punto de nav y segmento más cercano (hover)',
+          ShowClosestSegmentSelected: 'Línea de punto nav al segmento más cercano',
           EnableGLE: 'Habilitar mejoras en links de Google',
           EnableGLETitle:
             'Resalta los GPIDs a lugares cerrados en rojo, GPIDs a mas de 400m del lugar en Waze en verde azulado, GPIDs no válidos en magenta, GPIDs vinculados varias veces en naranja, GPIDs ya vinculados en gris (menú de autocompletar)',
@@ -3706,7 +3773,7 @@
           OpenPURTitle: 'Abre automáticamente el PUR asociado al lugar seleccionado',
           HidePaymentType: 'Ocultar tipo de pago',
           HidePaymentTypeTitle: 'Oculta la sección de tipo de pago cuando el costo está configurado como Gratuito',
-          GeometryMods: 'Habilitar opciones de modificación de geometría',
+          GeometryMods: 'Herramientas de geometría',
           GeometryModsTitle: 'Habilita opciones para modificar la geometría: ortogonalización, capacidad de rotar o redimensionar lugares de área',
           SimplifyFactor: 'Factor de simplificación',
           SimplifyFactorTitle: 'Cuanto mayor sea el factor de simplificación, más nodos serán eliminados',
@@ -3765,25 +3832,25 @@
           ShowMetric: 'Afficher en métrique',
           ShowRPPLockButtons: 'Afficher les boutons de lock pour les résidentiels',
           ShowRPPLockButtonsTitle: 'Affiche des boutons pour le niveau de verrouillage des lieux résidentiels',
-          ShowPlaceLocatorCrosshair: 'Afficher le repère de localisation du lieu',
+          ShowPlaceLocatorCrosshair: 'Repère de localisation du lieu',
           ShowPlaceLocatorCrosshairTitle: "Centre le lieu à l'écran et zoome au niveau défini",
           Zoom: 'Zoom',
           ZoomTitle: "Niveau de zoom utilisé lorsqu'on se centre sur un lieu",
-          ShowAddressSearch: "Afficher icône de recherche à côté de l'adresse",
+          ShowAddressSearch: "Icône de recherche d'adresse",
           ShowAddressSearchTitle: "Affiche une loupe à côté de l'adresse du lieu. Cliquer ce bouton chargera l'adresse dans la barre de recherche",
           ShowPlaceCategoryButtons: 'Ajouter des icônes de catégorie au dessus de la sélection de catégories',
           ShowPLAButton: 'Afficher le bouton de création de parking',
           ShowPLAButtonTitle: 'Démarre le mode création de parking pour tracer un parking qui aura le nom du lieu sélectionné',
-          ShowCopyPlaceButton: 'Afficher le bouton de clonage de lieu',
+          ShowCopyPlaceButton: 'Bouton de clonage de lieu',
           ShowCopyPlaceButtonTitle: 'Clone le lieu sélectionné en nouveau lieu avec les mêmes valeurs',
-          ShowGPIDTooltip: 'Afficher en infobulle le fournisseur externe',
+          ShowGPIDTooltip: 'Infobulle fournisseur externe',
           ShowGPIDTooltipTitle: 'Affiche une infobulle avec les informations du fournisseur externe',
           NewPlaces: 'Nouveaux Lieux',
           EditRPPAfterCreate: "Editer l'adresse du résidentiel après création",
           EditRPPAfterCreateTitle: "Ouvre automatiquement la zone d'édition de l'adresse du lieu résidentiel et se positionne sur la saisie du n° de rue",
-          UseStreetFromClosestSegment: 'Utiliser le nom de rue du segment le plus proche',
+          UseStreetFromClosestSegment: 'Rue du segment le plus proche',
           UseStreetFromClosestSegmentTitle: "Prend le nom de rue du segment visible le plus proche et l'insère dans l'adresse du nouveau lieu",
-          UseCityFromClosestSegment: 'Utiliser le nom de ville du segment le plus proche',
+          UseCityFromClosestSegment: 'Ville du segment le plus proche',
           UseCityFromClosestSegmentTitle: "Prend le nom de ville du segment visible le plus proche et l'insère dans l'adresse du nouveau lieu",
           ClosestSegmentAltCity: 'Lorsque le nom principal est «Hors ville» regarder le nom en alt',
           ClosestSegmentAltCityTitle: 'Lorsque le nom principal est «Hors ville» essayer de trouver un nom de rue alternatif avec une ville',
@@ -3804,7 +3871,7 @@
           ShowPLANameTitle: 'Affiche le nom du parking au milieu du lieu zone',
           Item: 'Option',
           PlaceMenuCustomization: 'Personnalisation du menu Lieu',
-          ClearDescription: 'Afficher le bouton «Effacer description»',
+          ClearDescription: 'Bouton «Effacer description»',
           ClearDescriptionTitle: "Ajoute un bouton «Effacer description» en haut à droite de l'entrée de description qui, lorsqu'il est cliqué, effacera tout le texte dans le champ de saisie",
           PropertiesPanel: 'Panneau des propriétés',
           FontSize: 'Taille de police',
@@ -3812,7 +3879,7 @@
           Bold: 'Gras',
           FontOutlineColor: 'Couleur surlignage police',
           FontOutlineWidth: 'Épaisseur surlignage police',
-          ProdPL: 'Force production PL',
+          ProdPL: 'Utiliser le permalink de production',
           MoveAddress: "Déplacer l'adresse en haut du panneau",
           MoveAddressTitle: "Déplace l'édition d'adresse en haut du panneau de propritétés",
           ShowParkingSpaceEstimatorTool: 'Afficher le simulateur de places de stationnement',
@@ -3830,8 +3897,8 @@
           PSEShowPSEButton: 'Afficher le simulateur de places de stationnement',
           PSEShowPSEButtonTitle: 'Affiche un bouton pour lancer le simulateur de places de stationnement',
           PSEDisplayButtonTitle: 'Ouvre le simulateur de places de stationnement',
-          ShowNavPointClosestSegmentOnHover: "Afficher une ligne entre le point d'entrée et le segment le plus proche",
-          ShowClosestSegmentSelected: "Afficher une ligne depuis le point d'entrée vers le point sur le segment le plus proche",
+          ShowNavPointClosestSegmentOnHover: "Point d'entrée et segment le plus proche (hover)",
+          ShowClosestSegmentSelected: "Ligne du point d'entrée au segment le plus proche",
           EnableGLE: 'Activer le lien Google amélioré',
           EnableGLETitle:
             "Met en évidence les liens Google fermés en rouge, les points d'intérêt Google liés se trouvant à plus de 400 m du Lieu Waze en bleu ciel, les liens Google non valides en magenta, les points d'intérêt Google liés plusieurs fois en orange, les points d'intérêt déjà liés en gris (menu de saisie semi-automatique)",
@@ -3839,7 +3906,7 @@
           OpenPURTitle: 'Ouvre automatiquement les PUR associés au lieu sélectionné',
           HidePaymentType: 'Masquer les modes de paiement',
           HidePaymentTypeTitle: 'Masque la section des modes de paiement lorsque le coût est défini comme gratuit',
-          GeometryMods: 'Activer les options de modification de géométrie',
+          GeometryMods: 'Outils de géométrie',
           GeometryModsTitle: 'Active les options pour modifier la géométrie telle que : orthogonalisation, possibilité de faire pivoter ou de redimensionner la zone (redimensionnement)',
           SimplifyFactor: 'Facteur de simplification',
           SimplifyFactorTitle: 'Plus le facteur de simplification est grand, plus de nœuds seront supprimés',
