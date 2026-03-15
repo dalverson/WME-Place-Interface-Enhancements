@@ -84,6 +84,10 @@
     map:                    '#map',
     wazeMap:                '#WazeMap',
     photoViewerResults:     '#showDiv',
+    // Shadow DOM host elements
+    houseNumber:            '.house-number',          // RPP address — input lives in shadow root
+    sidebarAlert:           'wz-alert.sidebar-alert', // openPUR review button (shadow → shadow)
+    searchAutocomplete:     '#search-autocomplete',   // WME search bar (shadow → shadow → input)
   };
 
   // Maps sdk shortcutId → settings key (needed because HideAreaPlacesShortcut uses ToggleAreaPlacesShortcut setting)
@@ -2332,7 +2336,7 @@
     if ($(WME_DOM.addressEditView).length > 0) {
       $(WME_DOM.addressFullAddress).trigger('click');
       await new Promise((r) => setTimeout(r, 150));
-      $('input', $('.house-number')[0].shadowRoot).focus();
+      $('input', $(WME_DOM.houseNumber)[0].shadowRoot).focus();
     } else if (rppTries < 1000) {
       console.log('not found');
       setTimeout(async function () {
@@ -2431,7 +2435,7 @@
     setTimeout(() => {
       // The "Review requests" button lives inside wz-alert's shadow DOM as a wz-button,
       // which in turn wraps a native <button> in its own shadow DOM.
-      const wzAlert = document.querySelector('wz-alert.sidebar-alert');
+      const wzAlert = document.querySelector(WME_DOM.sidebarAlert);
       const wzBtn = wzAlert?.shadowRoot?.querySelector('wz-button');
       const btn = wzBtn?.shadowRoot?.querySelector('button') ?? wzBtn;
       if (btn) btn.click();
@@ -3068,7 +3072,7 @@
 
         // The search input is nested in two shadow roots:
         // #search-autocomplete (shadow) → wz-text-input (shadow) → <input>
-        const autocomplete = document.querySelector('#search-autocomplete');
+        const autocomplete = document.querySelector(WME_DOM.searchAutocomplete);
         const textInputEl = autocomplete?.shadowRoot?.querySelector('wz-text-input');
         const searchEl = textInputEl?.shadowRoot?.querySelector('input');
         if (!searchEl) {
