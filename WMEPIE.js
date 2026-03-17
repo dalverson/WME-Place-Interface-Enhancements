@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Place Interface Enhancements
 // @namespace    https://greasyfork.org/users/30701-justins83-waze
-// @version      2026.03.15.02
+// @version      2026.03.15.03
 // @description  Enhancements to various Place interfaces
 // @include      https://www.waze.com/editor*
 // @include      https://www.waze.com/*/editor*
@@ -358,7 +358,13 @@
         const rt = seg.roadType;
         if (_SKIP_ROAD_TYPES.has(rt)) continue; // always skip non-drivable
         if (skipPLR && rt === 20 /* PARKING_LOT_ROAD */) continue;
-        if (skipPrivate && rt === 17 /* PRIVATE_ROAD */) continue;
+        if (skipPrivate && rt === 17 /* PRIVATE_ROAD */){
+            debugger;
+            const segment = sdk.DataModel.Segments.getById({ segmentId: seg.id });
+            const street  = sdk.DataModel.Streets.getById({ streetId: segment.primaryStreetId });
+            if(street?.name === null || street?.name == "")
+                continue;
+        }
 
         // Cheap pre-pass: skip if even the minimum line distance >= current best
         const approxDist = turf.pointToLineDistance(searchPoint, seg.geometry, { units: 'kilometers' });
