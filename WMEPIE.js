@@ -16,7 +16,7 @@
 // @require      https://update.greasyfork.org/scripts/509664/WME%20Utils%20-%20Bootstrap.js
 // @require      https://update.greasyfork.org/scripts/37486/1158035/WME%20Utils%20-%20HoursParser.js
 // @require      https://greasyfork.org/scripts/38421-wme-utils-navigationpoint/code/WME%20Utils%20-%20NavigationPoint.js
-// @require      https://update.greasyfork.org/scripts/569692/1782131/WME%20Utils%20-%20SDK%20Google%20Link%20Enhancer.js
+// @require      https://greasyfork.org/scripts/569692/code/WME%20Utils%20-%20SDK%20Google%20Link%20Enhancer.js
 // @require      https://greasyfork.org/scripts/375202-photo-viewer-db-interface/code/Photo%20Viewer%20DB%20Interface.js
 // @require      https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js
 // @connect     greasyfork.org
